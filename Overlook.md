@@ -25,3 +25,37 @@ The result should be an analytical situational-awareness platform, not a system 
 
 ## 1. Scope and acceptance criteria
 
+### Required for the initial release
+
+- Responsive web application with an interactive geospatial map.
+- Multiple selectable signal layers.
+- Unified search by geographic area, time, category, and supported entity or event.
+- Source-aware signal detail panels.
+- A timeline for navigating signals by observation time.
+- Normalized geospatial data using a documented internal schema.
+- Source registry containing provider metadata and capability status.
+- Source timestamps, ingestion timestamps, freshness indicators, and attribution.
+- Clearly labeled simulated data for development and demonstrations.
+- At least two verified real-data integrations chosen after source inspection.
+- Automated tests for parsing, normalization, time handling, geometry, and API behavior.
+- Appropriate database persistence and indexes.
+- Docker-based local setup where practical.
+- README with setup instructions, source documentation, assumptions, and limitations.
+- Deployment instructions and a verifiable release checklist.
+
+### Required signal categories
+
+The data architecture must accommodate all seven requested categories.
+
+| Category | Examples of supported information | Important limitations |
+|---|---|---|
+| Aircraft | Publicly available aircraft position reports and supported flight metadata | Coverage, delays, identifiers, and commercial-use restrictions vary by provider |
+| Ships | Authorized AIS-derived vessel positions and available public vessel metadata | Coverage and availability vary; public web visibility does not guarantee API access |
+| Satellites | Public orbital data and authorized Earth-observation catalog metadata | Orbit estimates, observation times, and image-acquisition times are different concepts |
+| Earthquakes | Event locations, origin times, magnitudes, depths, and source updates | Events and their reported parameters may be revised |
+| Weather | Conditions, forecasts, alerts, and observation metadata | Forecasts are estimates; stations and models have different coverage and update intervals |
+| Public cameras | Metadata and links for explicitly public, authorized camera feeds | No unauthorized CCTV access, private feeds, or unapproved video scraping |
+| Infrastructure | Public geographic features, transport networks, landmarks, and appropriately licensed open datasets | Do not expose sensitive operational details or create vulnerability-targeting workflows |
+
+The initial release does not need every category to have a production-ready live integration. It does need a working source registry, a reusable adapter architecture, realistic simulated fixtures, and a clear status for every integration.
+
