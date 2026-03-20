@@ -59,3 +59,35 @@ The data architecture must accommodate all seven requested categories.
 
 The initial release does not need every category to have a production-ready live integration. It does need a working source registry, a reusable adapter architecture, realistic simulated fixtures, and a clear status for every integration.
 
+### Required analytical correctness
+
+- Normalize geographic coordinates and validate geometry.
+- Normalize timestamps into UTC while preserving source time and timezone metadata.
+- Distinguish observation time, publication time, ingestion time, and valid time.
+- Preserve source identifiers and original source links.
+- Prevent duplicate ingestion from producing duplicate signals.
+- Keep missing data separate from genuine zero values.
+- Identify stale, delayed, unavailable, and simulated information.
+- Avoid joining records solely because they are geographically close.
+- Present cross-source correlations as hypotheses unless supported by sufficient evidence.
+- Display coverage limitations and provider failures.
+- Never manufacture real-time updates, locations, source records, or incident explanations.
+
+### Explicitly out of scope for the initial MVP
+
+- Accessing private camera systems or circumventing authentication.
+- Face recognition or identification of people in public footage.
+- Building dossiers on private individuals or inferring their routines.
+- Unauthorized tracking or surveillance of a specific individual.
+- Tactical targeting, target selection, or operational tracking for violent purposes.
+- Identifying exploitable weaknesses in sensitive infrastructure.
+- Unauthorized redistribution of commercial datasets.
+- Automatic claims that an aircraft, vessel, satellite, or infrastructure feature is associated with a particular incident without supporting evidence.
+- Autonomous emergency response or control of physical infrastructure.
+- Guaranteed real-time coverage of all categories.
+- Machine-learning models trained on unverified or improperly licensed data.
+
+The application is an analytical information system. It must communicate uncertainty and the limitations of public data rather than claiming comprehensive real-world visibility.
+
+---
+
