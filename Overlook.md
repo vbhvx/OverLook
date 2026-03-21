@@ -91,3 +91,28 @@ The application is an analytical information system. It must communicate uncerta
 
 ---
 
+## 2. Data-source specification
+
+Treat every data source as a separate integration with its own contract, limitations, and usage permissions.
+
+### 2.1 Aircraft signals
+
+Potential data includes aircraft state vectors, position, altitude, heading, velocity, observation time, and available flight metadata.
+
+A candidate source is the [OpenSky Network REST API](https://openskynetwork.github.io/opensky-api/rest.html).
+
+Before integration, verify:
+
+- Authentication requirements.
+- Available endpoints and response schema.
+- Geographic query restrictions.
+- Historical-data availability.
+- API credits and rate limits.
+- Position and observation-time semantics.
+- Field availability and missing-value behavior.
+- Commercial-use permission and attribution requirements.
+
+OpenSky documents rate limits and requires consent for commercial use. Do not assume a public account is sufficient for a commercial or production deployment.
+
+Normalize available data into the common signal schema. Do not invent an aircraft registration, destination, operator, or flight route when the source does not provide it.
+
