@@ -116,3 +116,79 @@ OpenSky documents rate limits and requires consent for commercial use. Do not as
 
 Normalize available data into the common signal schema. Do not invent an aircraft registration, destination, operator, or flight route when the source does not provide it.
 
+### 2.2 Ship and vessel signals
+
+Use an explicitly selected maritime data provider whose API access and usage rights have been confirmed.
+
+Potential signal attributes include:
+
+- Provider vessel identifier.
+- Position.
+- Course and speed, when reported.
+- Observation time.
+- Available vessel class or metadata.
+- Source freshness.
+- Original record reference.
+
+Verify:
+
+- Geographic coverage.
+- Position update frequency.
+- Historical access.
+- Subscription requirements.
+- Commercial licensing and redistribution rights.
+- API response and error contracts.
+- Available identifiers and their reliability.
+
+Do not build against undocumented endpoints or scrape a commercial vessel-tracking website to imitate an authorized API.
+
+Missing vessel identity must remain missing. A location report alone is not proof of a vessel's ownership, mission, cargo, or intent.
+
+### 2.3 Satellite and Earth-observation signals
+
+Support two distinct concepts:
+
+**Orbital information:** Publicly available orbital elements or position estimates from verified sources, where permitted.
+
+**Earth observation:** Catalog metadata for satellite imagery, including acquisition time, geographic footprint, sensor, processing level, and authorized imagery access links.
+
+These are not interchangeable. A satellite's calculated position does not mean it captured an image of the point beneath it at that exact time.
+
+A candidate for Earth-observation data is the [Copernicus Data Space Ecosystem API documentation](https://documentation.dataspace.copernicus.eu/APIs.html).
+
+Verify:
+
+- Dataset and product coverage.
+- Authentication and access requirements.
+- Geographic and temporal query capabilities.
+- Data licensing and permitted reuse.
+- Image-download restrictions and processing requirements.
+- Orbital element source, epoch, and validity limitations.
+- Catalog timestamps versus actual acquisition timestamps.
+
+For the initial MVP, catalog metadata and authorized links may be sufficient. Do not download or process large raster datasets unless the implementation requires it.
+
+### 2.4 Earthquake signals
+
+Use an established earthquake catalog with documented event identifiers and update semantics.
+
+A candidate source is the [USGS Earthquake Catalog API](https://earthquake.usgs.gov/fdsnws/event/1/).
+
+The source can support event queries in GeoJSON, including spatial and temporal filtering.
+
+Potential normalized attributes include:
+
+- Event identifier.
+- Latitude and longitude.
+- Origin time.
+- Magnitude and magnitude type.
+- Depth.
+- Place description, when provided.
+- Event URL.
+- Source update time.
+- Status or revision metadata, when available.
+
+Handle revised, superseded, and removed events where the source exposes these states.
+
+Do not assume the first reported location or magnitude is immutable. Preserve updates and distinguish the original observation from the currently preferred source record.
+
