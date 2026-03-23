@@ -192,3 +192,56 @@ Handle revised, superseded, and removed events where the source exposes these st
 
 Do not assume the first reported location or magnitude is immutable. Preserve updates and distinguish the original observation from the currently preferred source record.
 
+### 2.5 Weather signals
+
+Choose a documented provider that covers the required geographic regions and data types.
+
+Potential information includes:
+
+- Observed conditions.
+- Forecast conditions.
+- Temperature and precipitation.
+- Wind speed and direction.
+- Severe-weather alerts.
+- Observation stations and measurement metadata.
+- Forecast issue time and validity interval.
+
+A potential candidate is [Open-Meteo](https://open-meteo.com/), subject to the actual usage terms and the selected deployment model. Its published terms distinguish non-commercial access from commercial use.
+
+Verify:
+
+- Geographic coverage.
+- Provider and model identity.
+- Forecast versus observation semantics.
+- Forecast initialization time.
+- Observation time and forecast validity period.
+- Units and conversions.
+- Update intervals and request limits.
+- Commercial-use, attribution, and caching conditions.
+
+Never label a forecast as a confirmed observation. If a forecast predicts a storm, show it as a forecast with its valid interval and source, not as evidence that the storm has already occurred.
+
+### 2.6 Public camera signals
+
+Support only camera metadata and feeds that are explicitly public and authorized for the intended use.
+
+Possible fields include:
+
+- Camera identifier.
+- Display name.
+- Public location.
+- Source organization.
+- Feed or webpage URL.
+- Feed type.
+- Last-verified timestamp.
+- Availability state.
+- License and access restrictions.
+
+For the initial release, camera metadata and links to original publishers may be sufficient.
+
+Do not crawl the internet for exposed camera credentials, bypass access controls, access private CCTV, or use unsupported URLs that reveal private video streams.
+
+Do not implement facial recognition, biometric identification, or identity inference. Avoid retaining video frames by default.
+
+When an embedded feed is permitted, validate the source, content security policy, and embedding terms. Prefer linking to the original source if embedding is prohibited or unreliable.
+
