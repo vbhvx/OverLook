@@ -245,3 +245,45 @@ Do not implement facial recognition, biometric identification, or identity infer
 
 When an embedded feed is permitted, validate the source, content security policy, and embedding terms. Prefer linking to the original source if embedding is prohibited or unreliable.
 
+### 2.7 Infrastructure and geographic context
+
+Use authorized open geographic data or data from verified public-sector providers.
+
+Suitable initial layers may include:
+
+- Administrative boundaries.
+- Roads and transport networks.
+- Public landmarks and facilities.
+- Publicly documented geographic features.
+- Publicly available infrastructure categories where reuse is authorized.
+
+A potential base-map and geographic-data source is [OpenStreetMap](https://www.openstreetmap.org/). Its data licensing, tile-service terms, and geocoding-service policy must be treated separately.
+
+Relevant official policies include:
+
+- [OpenStreetMap tile usage policy](https://operations.osmfoundation.org/policies/tiles/).
+- [Nominatim usage policy](https://operations.osmfoundation.org/policies/nominatim/).
+
+Do not assume that the availability of open map data grants unlimited use of OpenStreetMap's hosted tile or geocoding infrastructure.
+
+Use infrastructure data to provide ordinary geographic context. Do not create functions that expose non-public access points, security weaknesses, or sensitive operational details.
+
+### 2.8 First task: verify source contracts before map integration
+
+Before building the full dashboard:
+
+1. Select a small representative subset of providers.
+2. Inspect official documentation and permitted use.
+3. Retrieve a small number of representative responses.
+4. Confirm the actual schema, units, coordinate reference system, and timestamps.
+5. Check missing fields, duplicate records, revisions, and pagination.
+6. Measure request limits and expected update intervals.
+7. Determine which data can be stored, cached, displayed, or redistributed.
+8. Document attribution requirements.
+9. Implement a test parser for each selected provider.
+10. Add source health and disabled states.
+
+**Stop condition:** Do not build the complete real-data visualization around an assumed API contract. First verify that the source can supply the actual fields needed by the UI under the intended usage terms.
+
+---
+
