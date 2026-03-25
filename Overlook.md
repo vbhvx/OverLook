@@ -287,3 +287,64 @@ Before building the full dashboard:
 
 ---
 
+## 3. Architecture and technology choices
+
+Use a geospatially capable modular architecture. Keep the first implementation small enough to test and explain.
+
+| Component | Recommended choice | Reason |
+|---|---|---|
+| Frontend | React, TypeScript, Vite | Fast iteration and clear component structure |
+| Interactive map | MapLibre GL JS | Layered vector and raster map visualization |
+| Frontend styling | Tailwind CSS or equivalent | Consistent layout and responsive design |
+| Backend | Python + FastAPI | Typed APIs and geospatial data processing |
+| HTTP client | `httpx` | Timeouts, connection pooling, and request handling |
+| Data validation | Pydantic | Runtime validation of API and normalized records |
+| Geospatial processing | GeoPandas/Shapely where justified | Geometry validation and transformations |
+| Database | PostgreSQL + PostGIS | Spatial queries, indexing, and persistence |
+| Data analysis | Pandas where useful | Normalization and aggregation |
+| Background processing | Worker and queue when required | Scheduled source synchronization |
+| Cache | Redis or a suitable TTL cache | Reduce provider load and improve repeated queries |
+| Charts and timelines | Recharts or a suitable visualization library | Counts, temporal trends, and source health |
+| Testing | pytest and Vitest | Backend and frontend behavior |
+| Browser automation | Playwright | End-to-end interaction testing |
+| Containerization | Docker Compose | Reproducible local setup |
+| Mapping base layer | Verified tile or vector-tile provider | Geographic context and attribution |
+| Deployment | Web frontend and Docker-capable API/database hosting | Independent deployment and operational control |
+
+### Architecture diagram
+
+```text
+Public / Authorized Data Sources
+    ├── Aircraft
+    ├── Vessels
+    ├── Satellite / Earth Observation
+    ├── Earthquakes
+    ├── Weather
+    ├── Public Cameras
+    └── Infrastructure
+               |
+               v
+      Provider Adapters
+               |
+               v
+   Validation + Normalization
+               |
+               v
+      PostgreSQL + PostGIS
+               |
+               v
+     Query / Correlation API
+               |
+       ┌───────┴────────┐
+       v                v
+   Map Layers        Timeline /
+   and Filters       Event Detail
+       └───────┬────────┘
+               v
+        React Dashboard
+```
+
+Use a backend cache or background worker only when justified by provider limits, request volume, or synchronization requirements.
+
+Do not fetch every source directly from the browser. Centralizing provider access makes it easier to validate records, control rate limits, protect credentials, enforce licensing restrictions, and report source health.
+
