@@ -348,3 +348,15 @@ Use a backend cache or background worker only when justified by provider limits,
 
 Do not fetch every source directly from the browser. Centralizing provider access makes it easier to validate records, control rate limits, protect credentials, enforce licensing restrictions, and report source health.
 
+### Core architectural rule
+
+The map is a presentation layer, not the source of truth.
+
+Provider adapters establish what data was received. The normalization layer validates its meaning. The database stores queryable records and provenance. The API returns signals with clear temporal and spatial semantics. The frontend renders the resulting data without inventing new facts.
+
+---
+
+## 4. Core business logic
+
+This is the most important part of the application.
+
