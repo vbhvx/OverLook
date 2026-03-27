@@ -360,3 +360,77 @@ Provider adapters establish what data was received. The normalization layer vali
 
 This is the most important part of the application.
 
+### 4.1 Normalize heterogeneous signals
+
+Every provider will use different naming conventions, timestamps, identifiers, coordinates, and metadata.
+
+Define a common envelope for all signal categories.
+
+A normalized signal should contain fields equivalent to:
+
+| Field | Meaning |
+|---|---|
+| `id` | Internal unique identifier |
+| `source_id` | Registered provider identifier |
+| `source_record_id` | Original provider record identifier, where available |
+| `category` | Aircraft, vessel, satellite, earthquake, weather, camera, or infrastructure |
+| `signal_type` | More specific record type |
+| `geometry` | Validated spatial geometry |
+| `observed_at` | Time the source says the observation occurred |
+| `published_at` | Time the source published the record, if known |
+| `ingested_at` | Time the application received the record |
+| `valid_from` | Start of the record's validity interval, if applicable |
+| `valid_until` | End of the record's validity interval, if applicable |
+| `source_url` | Original record or source page |
+| `data_status` | Actual, forecast, stale, delayed, simulated, or other supported state |
+| `source_metadata` | Category-specific normalized fields |
+| `raw_record_hash` | Fingerprint for duplicate detection |
+| `schema_version` | Normalized contract version |
+
+Use a versioned schema so provider changes can be introduced deliberately.
+
+Do not force unrelated categories into the same specific attributes. A weather forecast, an earthquake event, and an aircraft position should share the common envelope while retaining their own typed metadata.
+
+### 4.2 Spatial normalization
+
+Use a consistent internal coordinate reference system, normally WGS84 for geographic point and map data.
+
+Validate:
+
+- Latitude and longitude ranges.
+- Geometry type.
+- Coordinate order.
+- Missing coordinates.
+- Invalid or empty geometry.
+- Geometry collections, polygons, and bounding boxes.
+- Antimeridian-crossing areas.
+- Spatial reference metadata supplied by the source.
+
+Remember that longitude and latitude can be accidentally reversed. Test this explicitly.
+
+Use spatial indexes such as PostGIS GiST indexes for geographic search.
+
+Do not assume every source point is accurate to the displayed decimal precision. Where accuracy metadata is available, preserve it. Avoid communicating false precision through map markers or tooltips.
+
+### 4.3 Temporal normalization
+
+Normalize timestamps to UTC for internal comparisons and storage.
+
+Preserve the original timestamp and its interpretation from the provider.
+
+Distinguish:
+
+- Event or observation time.
+- Provider publication time.
+- Ingestion time.
+- Forecast issue time.
+- Forecast validity interval.
+- Satellite image acquisition time.
+- Satellite orbital-element epoch.
+
+Do not use ingestion time as a substitute for observation time.
+
+Handle records that arrive late, are revised, have missing timestamps, or refer to an earlier period.
+
+A time filter must use the appropriate timestamp semantics for each category. If a category provides only an approximate time, make that limitation visible.
+
