@@ -434,3 +434,43 @@ Handle records that arrive late, are revised, have missing timestamps, or refer 
 
 A time filter must use the appropriate timestamp semantics for each category. If a category provides only an approximate time, make that limitation visible.
 
+### 4.4 Duplicate detection and source updates
+
+Implement deterministic deduplication.
+
+Prefer provider identifiers when stable and documented. Otherwise use a composite key based on the source, category, record attributes, observation time, and a normalized record fingerprint.
+
+A revised earthquake magnitude or corrected source record should not automatically create a completely unrelated event when the source provides a stable identity.
+
+Handle:
+
+- Repeated polling results.
+- Duplicate webhook or feed deliveries.
+- Updated source records.
+- Late-arriving observations.
+- Deleted or superseded source events, where supported.
+- Schema changes.
+
+Record when a source record was last seen and last changed.
+
+Do not permanently discard history where version changes are important for event interpretation.
+
+### 4.5 Geographic and temporal filtering
+
+Support queries by:
+
+- Geographic bounding box.
+- Selected map area.
+- Time range.
+- Signal category.
+- Source.
+- Data status.
+- Supported event attributes.
+- Provider freshness.
+
+Apply filtering on the backend when it materially reduces the data returned to the browser.
+
+Use appropriate spatial and time indexes. Bound result sizes, use cursor pagination where needed, and avoid sending an entire global dataset to the frontend.
+
+For dynamic signals, prefer viewport-bounded queries or appropriately aggregated data. For map zoomed far out, cluster or aggregate records rather than rendering an unbounded number of individual markers.
+
