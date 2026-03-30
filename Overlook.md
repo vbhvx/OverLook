@@ -474,3 +474,47 @@ Use appropriate spatial and time indexes. Bound result sizes, use cursor paginat
 
 For dynamic signals, prefer viewport-bounded queries or appropriately aggregated data. For map zoomed far out, cluster or aggregate records rather than rendering an unbounded number of individual markers.
 
+### 4.6 Multi-layer map logic
+
+Allow users to enable and disable signal layers independently.
+
+Each layer must define:
+
+- Supported category.
+- Required fields.
+- Marker or geometry type.
+- Styling rules.
+- Refresh policy.
+- Visibility at different zoom levels.
+- Loading and failure state.
+- Attribution.
+- Data freshness behavior.
+
+Use distinct and accessible visual encodings for different categories. Do not use color alone to communicate critical status.
+
+Avoid visually implying that two signals are related merely because they share a color or appear close together.
+
+The frontend should remain usable when one data provider fails. A failure in weather data must not hide earthquake or infrastructure data.
+
+### 4.7 Cross-source event correlation
+
+Provide a way to investigate signals that may be related in space and time.
+
+Initial correlation should use transparent deterministic rules rather than an opaque AI model.
+
+Examples:
+
+- Display earthquake reports within a selected geographic area and time window.
+- Show weather observations or alerts near an event.
+- Find relevant public infrastructure or geographic context surrounding an event.
+- Show satellite observation metadata that overlaps a selected region.
+- Display available aircraft or vessel signals within a bounded area and interval when their provider and use case permit it.
+
+Every relationship must expose the underlying rule, source records, time window, geographic criteria, and limitations.
+
+**Proximity is not causation.** An aircraft position near a storm does not prove it is responding to that storm. A vessel near an infrastructure feature does not establish a relationship between them.
+
+Use language such as “nearby signals,” “temporally overlapping records,” or “potentially related observations” unless direct evidence supports a stronger conclusion.
+
+Do not infer a person's identity, intentions, or private routines from combined geospatial signals.
+
