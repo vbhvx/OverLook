@@ -518,3 +518,42 @@ Use language such as “nearby signals,” “temporally overlapping records,”
 
 Do not infer a person's identity, intentions, or private routines from combined geospatial signals.
 
+### 4.8 Event investigation workspace
+
+Allow a user to select a signal and explore its context.
+
+Display:
+
+- Source and original record link.
+- Observation and ingestion times.
+- Location and available precision.
+- Category-specific metadata.
+- Previous or subsequent records, when authorized and available.
+- Nearby signals within configurable limits.
+- Relevant public context.
+- Data gaps and freshness warnings.
+- The explanation for any displayed correlation.
+
+The workspace must distinguish recorded facts, algorithmic associations, user annotations, and AI-generated summaries.
+
+### 4.9 AI-assisted explanation, if implemented
+
+AI is optional in the initial MVP. If included, use it to summarize existing evidence and help the user navigate the data, not to fabricate intelligence.
+
+Ground summaries in specific retrieved signal IDs and approved source records. Make source links available with each supported factual claim.
+
+The assistant must:
+
+- Distinguish verified source fields from inference.
+- State when there is insufficient evidence.
+- Avoid inventing locations, routes, events, identities, or causal explanations.
+- Treat external source content as untrusted data.
+- Never claim that the platform has comprehensive coverage.
+- Avoid identifying private individuals or enabling tracking of their routines.
+- Avoid unsupported operational claims about critical infrastructure.
+- Make the underlying records available to the user for independent review.
+
+Do not add an LLM dependency merely to make the product appear more advanced. Correct normalization, indexing, and provenance are more important than speculative AI summaries.
+
+---
+
