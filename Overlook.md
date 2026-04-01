@@ -557,3 +557,22 @@ Do not add an LLM dependency merely to make the product appear more advanced. Co
 
 ---
 
+## 5. Backend API contract
+
+Expose a versioned API with typed schemas and structured error responses.
+
+### Initial endpoints
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/v1/health` | Service health and readiness |
+| `GET /api/v1/sources` | Registered sources and current status |
+| `GET /api/v1/layers` | Available map layers and their metadata |
+| `GET /api/v1/signals` | Query signals by bounds, time, category, and source |
+| `GET /api/v1/signals/{signalId}` | Retrieve a signal and its provenance |
+| `GET /api/v1/timeline` | Aggregate available signals over a time range |
+| `GET /api/v1/events` | Retrieve supported events or deterministic correlations |
+| `GET /api/v1/events/{eventId}` | Retrieve event context and supporting records |
+| `GET /api/v1/regions` | Retrieve supported geographic regions or saved public areas |
+| `GET /api/v1/map/summary` | Return viewport-level counts and layer summaries |
+
