@@ -576,3 +576,55 @@ Expose a versioned API with typed schemas and structured error responses.
 | `GET /api/v1/regions` | Retrieve supported geographic regions or saved public areas |
 | `GET /api/v1/map/summary` | Return viewport-level counts and layer summaries |
 
+### Signal query example
+
+`GET /api/v1/signals?category=earthquake&start=2026-10-01T00:00:00Z&end=2026-10-02T00:00:00Z&bbox=-10,35,5,45&limit=500`
+
+This is an example API contract, not a claim that a particular provider has already been integrated.
+
+Validate bounding-box coordinates, interval ordering, category values, pagination, and maximum query sizes.
+
+### Example normalized response
+
+```json
+{
+  "items": [
+    {
+      "id": "example-signal-id",
+      "category": "earthquake",
+      "signalType": "seismic-event",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [72.8, 19.1]
+      },
+      "observedAt": "2026-10-25T10:15:00Z",
+      "ingestedAt": "2026-10-25T10:16:30Z",
+      "dataStatus": "actual",
+      "source": {
+        "id": "verified-provider-id",
+        "recordUrl": "https://example.invalid/replace-with-verified-record-url"
+      },
+      "metadata": {
+        "magnitude": null,
+        "depthKm": null
+      }
+    }
+  ],
+  "meta": {
+    "limit": 500,
+    "nextCursor": null,
+    "partial": false
+  }
+}
+```
+
+This response is a **schema illustration using placeholder data**, not a real earthquake record. Replace all example identifiers, URLs, and values with verified data before presenting it as actual information.
+
+### Additional provider endpoints
+
+Provider-specific ingestion and synchronization routes should remain internal unless there is an explicit reason to expose them.
+
+For external callbacks or webhooks, validate the sender, signature where available, event identifier, timestamp, and idempotency behavior.
+
+Do not create an unrestricted API endpoint that lets a client supply an arbitrary URL for the server to fetch. Use configured provider adapters to avoid SSRF and untrusted network access.
+
