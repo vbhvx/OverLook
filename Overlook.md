@@ -628,3 +628,21 @@ For external callbacks or webhooks, validate the sender, signature where availab
 
 Do not create an unrestricted API endpoint that lets a client supply an arbitrary URL for the server to fetch. Use configured provider adapters to avoid SSRF and untrusted network access.
 
+### API requirements
+
+- Validate requests and responses at runtime.
+- Use consistent response schemas.
+- Include request IDs for diagnostics.
+- Apply rate limits and bounded query sizes.
+- Return explicit freshness, partial-data, and provider-error states.
+- Reject invalid geometry and timestamps.
+- Do not expose provider secrets or internal stack traces.
+- Use appropriate HTTP status codes: `400` for malformed requests, `422` for semantically invalid input where appropriate, `502` or `503` for upstream failures, and `429` for rate limiting.
+- Keep provider-specific data normalization in the backend.
+
+---
+
+## 6. Frontend specification
+
+Build a single responsive geospatial intelligence workspace with five principal sections.
+
