@@ -646,3 +646,38 @@ Do not create an unrestricted API endpoint that lets a client supply an arbitrar
 
 Build a single responsive geospatial intelligence workspace with five principal sections.
 
+### A. Global map
+
+Display the base map and selectable signal layers.
+
+Required functionality:
+
+- Pan and zoom.
+- Category layer toggles.
+- Bounding-box-based queries.
+- Clustered markers at lower zoom levels.
+- Detail markers at higher zoom levels.
+- Loading and empty states.
+- Source-specific error indicators.
+- Layer legend.
+- Map attribution.
+- Clear indication of stale or simulated content.
+
+Only render data within the supported query extent and time window.
+
+### B. Layer control panel
+
+Allow users to enable, disable, and configure supported categories:
+
+- Aircraft.
+- Ships.
+- Satellites.
+- Earthquakes.
+- Weather.
+- Public cameras.
+- Infrastructure.
+
+For each layer, show its source, status, last successful update, update behavior, and relevant limitations.
+
+If an integration is unavailable, show “Not configured,” “Awaiting authorization,” or another precise status instead of pretending that it is live.
+
