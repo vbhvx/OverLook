@@ -681,3 +681,35 @@ For each layer, show its source, status, last successful update, update behavior
 
 If an integration is unavailable, show “Not configured,” “Awaiting authorization,” or another precise status instead of pretending that it is live.
 
+### C. Timeline and filters
+
+Provide a timeline or time-range selector with:
+
+- Start and end time.
+- Timezone clarity.
+- Category filters.
+- Source filters.
+- Optional event-specific filters.
+- Signal counts.
+- Available-data coverage.
+- Playback of stored historical records where history exists.
+
+A playback animation must replay stored timestamps; it must not imply that historical records are live.
+
+Do not interpolate missing observations in a way that makes the displayed positions look real.
+
+### D. Signal detail panel
+
+When a user selects a marker or event, display:
+
+- Category and record type.
+- Source and source link.
+- Observation, publication, and ingestion times where available.
+- Location and available accuracy information.
+- Category-specific metadata.
+- Data status and freshness.
+- Available historical context.
+- Nearby records and applicable correlation explanations.
+
+Hide unavailable fields rather than displaying invented placeholders as facts.
+
