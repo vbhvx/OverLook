@@ -713,3 +713,36 @@ When a user selects a marker or event, display:
 
 Hide unavailable fields rather than displaying invented placeholders as facts.
 
+### E. Event investigation panel
+
+Allow users to inspect a region or selected event and review potentially related signals.
+
+Include:
+
+- Selected geographic area.
+- Relevant time interval.
+- Supporting source records.
+- Source timestamps and freshness.
+- Correlation rule and matching criteria.
+- Contradictory or missing evidence where known.
+- Public geographic context.
+
+Do not automatically turn a cluster of records into a definitive narrative.
+
+### General UI requirements
+
+- Responsive layouts for desktop and mobile.
+- Clear typography and accessible color contrasts.
+- Keyboard-accessible controls.
+- Accessible alternatives to map-only information.
+- Loading, empty, error, stale, partial, and offline states.
+- Debounced search and bounded map queries.
+- No unbounded polling or repeated requests during map dragging.
+- Explicit demo-mode labeling.
+- Clear separation between recorded facts and derived associations.
+- Visible attribution for map and data providers.
+
+The map should be useful without being visually overwhelming. Users must be able to disable layers independently and understand the selected signal without needing to inspect every layer.
+
+---
+
