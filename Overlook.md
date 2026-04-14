@@ -746,3 +746,34 @@ The map should be useful without being visually overwhelming. Users must be able
 
 ---
 
+## 7. Database schema
+
+Use PostgreSQL with PostGIS for persistent geospatial data.
+
+The schema should preserve source records, normalized attributes, time semantics, and enough history to explain how the displayed result was obtained.
+
+### Required tables
+
+| Table | Purpose |
+|---|---|
+| `sources` | Provider registry, capabilities, license state, and configuration metadata |
+| `source_sync_runs` | Ingestion history, timings, record counts, and failures |
+| `source_records` | Provider identifiers, source timestamps, version metadata, and record fingerprints |
+| `signals` | Common normalized signal attributes and provenance |
+| `signal_positions` | Position observations for sources that produce time-series locations |
+| `signal_events` | Events and updated or revised event states |
+| `signal_relations` | Explicit associations between signals and the rules supporting them |
+| `map_layers` | Layer definitions, configuration, and display metadata |
+| `saved_regions` | Named geographic areas saved by the user, where accounts are enabled |
+| `saved_views` | Layer, time, and filter preferences, where persistence is required |
+| `audit_events` | Important administrative and security actions |
+| `data_quality_events` | Invalid records, stale data, schema changes, and reconciliation findings |
+
+### `sources`
+
+Suggested fields:
+
+`id`, `name`, `category`, `provider_type`, `official_docs_url`, `status`, `license_status`, `commercial_use_status`, `attribution_requirements`, `supported_capabilities`, `refresh_policy`, `rate_limit_policy`, `last_success_at`, `last_error_at`, `disabled_reason`, `created_at`, `updated_at`.
+
+Do not activate a production source just because its name and endpoint have been configured.
+
