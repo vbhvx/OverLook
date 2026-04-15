@@ -777,3 +777,19 @@ Suggested fields:
 
 Do not activate a production source just because its name and endpoint have been configured.
 
+### `source_records`
+
+Suggested fields:
+
+`id`, `source_id`, `external_record_id`, `record_hash`, `source_published_at`, `source_observed_at`, `source_updated_at`, `source_version`, `raw_payload_reference`, `ingested_at`, `processing_status`, `validation_errors`.
+
+Raw payloads should be retained only when useful, permitted, and consistent with the retention policy. Otherwise, retain a suitable normalized record and diagnostic fingerprint.
+
+### `signals`
+
+Suggested fields:
+
+`id`, `source_record_id`, `category`, `signal_type`, `geometry`, `observed_at`, `published_at`, `ingested_at`, `valid_from`, `valid_until`, `data_status`, `source_url`, `metadata`, `schema_version`, `is_simulated`, `created_at`, `updated_at`.
+
+Use PostGIS geometry types suitable for the category, with appropriate spatial reference definitions.
+
