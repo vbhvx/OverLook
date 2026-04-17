@@ -793,3 +793,21 @@ Suggested fields:
 
 Use PostGIS geometry types suitable for the category, with appropriate spatial reference definitions.
 
+### `signal_positions`
+
+For sources that produce position time series:
+
+`id`, `signal_id`, `source_id`, `geometry`, `position_timestamp`, `ingested_at`, `position_quality`, `accuracy_metadata`, `source_record_id`.
+
+Enforce appropriate uniqueness and deduplication constraints based on the source contract.
+
+Do not store high-frequency position histories indefinitely by default. Define retention based on use case, source permissions, and operational needs.
+
+### `signal_events`
+
+Suggested fields:
+
+`id`, `source_id`, `external_event_id`, `event_type`, `geometry`, `occurred_at`, `published_at`, `updated_at`, `status`, `metadata`, `source_url`.
+
+Support revisions where the provider exposes them.
+
