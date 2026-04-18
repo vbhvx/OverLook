@@ -811,3 +811,27 @@ Suggested fields:
 
 Support revisions where the provider exposes them.
 
+### `signal_relations`
+
+Suggested fields:
+
+`id`, `left_signal_id`, `right_signal_id`, `relation_type`, `rule_version`, `spatial_criteria`, `temporal_criteria`, `evidence_metadata`, `created_at`.
+
+Store the reason for the association. Do not treat a proximity-based association as causal evidence.
+
+### Database requirements
+
+- Use geometry indexes for spatial queries.
+- Use B-tree or appropriate composite indexes for timestamps, source IDs, categories, and status.
+- Apply unique constraints to stable provider identifiers and deduplication keys.
+- Keep ingestion records distinct from normalized signals.
+- Use transactions for multi-record updates that need atomicity.
+- Store timestamps consistently and preserve original source time information.
+- Version the normalized schema.
+- Create database migrations and documented rollback procedures.
+- Implement retention and deletion rules.
+- Use bounded queries and pagination.
+- Never convert a missing location or timestamp to an invented value.
+
+---
+
