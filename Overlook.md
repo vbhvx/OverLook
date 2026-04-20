@@ -835,3 +835,71 @@ Store the reason for the association. Do not treat a proximity-based association
 
 ---
 
+## 8. Repository structure
+
+Keep the repository easy to navigate and review.
+
+```text
+signal-intelligence/
+├── frontend/
+│   ├── src/
+│   │   ├── App.tsx
+│   │   ├── main.tsx
+│   │   ├── components/
+│   │   ├── map/
+│   │   ├── layers/
+│   │   ├── timeline/
+│   │   ├── events/
+│   │   ├── api/
+│   │   └── styles/
+│   ├── package.json
+│   ├── tsconfig.json
+│   └── Dockerfile
+├── backend/
+│   ├── app/
+│   │   ├── main.py
+│   │   ├── api/
+│   │   ├── models/
+│   │   ├── schemas/
+│   │   ├── services/
+│   │   ├── geospatial/
+│   │   ├── ingestion/
+│   │   ├── providers/
+│   │   ├── correlation/
+│   │   └── config.py
+│   ├── tests/
+│   │   ├── test_normalization.py
+│   │   ├── test_geospatial.py
+│   │   ├── test_time_handling.py
+│   │   ├── test_sources.py
+│   │   └── test_api.py
+│   ├── requirements.txt
+│   └── Dockerfile
+├── database/
+│   ├── migrations/
+│   └── seeds/
+├── tests/
+│   └── e2e/
+├── docs/
+│   ├── architecture.md
+│   ├── sources.md
+│   ├── data-model.md
+│   ├── api.md
+│   ├── data-policy.md
+│   └── deployment.md
+├── docker-compose.yml
+├── .env.example
+├── .gitignore
+└── README.md
+```
+
+Separate provider access, normalization, spatial querying, event correlation, and API routes where this makes testing easier.
+
+Do not add microservices, multiple queues, or a complex streaming platform until measured requirements justify them.
+
+---
+
+## 9. Implementation checklist
+
+Treat each phase as an independently testable milestone. Do not activate later phases until the preceding foundations are reliable.
+
