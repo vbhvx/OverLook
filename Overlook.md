@@ -903,3 +903,51 @@ Do not add microservices, multiple queues, or a complex streaming platform until
 
 Treat each phase as an independently testable milestone. Do not activate later phases until the preceding foundations are reliable.
 
+### Phase 0 — Source verification and feasibility
+
+- Inspect the existing repository and development environment.
+- Choose the initial geographic scope and MVP data sources.
+- Verify official API documentation and usage terms.
+- Inspect representative responses.
+- Confirm coordinate, timestamp, and identifier semantics.
+- Document the source registry and data contracts.
+- Define normalized signal schemas.
+- Identify unavailable or commercially restricted integrations.
+- Select the map and tile provider.
+- Record the initial feature boundaries and known limitations.
+
+**Gate:** The app must distinguish actual, simulated, and unavailable data before any production dashboard claims are made.
+
+### Phase 1 — Core map and normalized data
+
+- Set up React and TypeScript.
+- Set up FastAPI and validated schemas.
+- Set up PostgreSQL and PostGIS.
+- Implement initial migrations.
+- Implement the source registry.
+- Create deterministic simulated fixtures for every requested category.
+- Implement the common signal schema.
+- Build the map and layer controls.
+- Implement viewport-bounded signal queries.
+- Add clustering and basic filtering.
+- Add signal detail panels.
+- Implement health and source-status endpoints.
+- Add automated normalization tests.
+
+**Gate:** The complete map interface works with labeled simulated data, without pretending to have live provider connectivity.
+
+### Phase 2 — First real-data integrations
+
+- Select at least two providers with verified usage permissions.
+- Implement their provider adapters.
+- Validate actual responses.
+- Normalize geometries, timestamps, and identifiers.
+- Implement deduplication and updated-record handling.
+- Add data-source attribution.
+- Add provider timeout and rate-limit handling.
+- Track ingestion runs and source health.
+- Test missing and malformed fields.
+- Compare normalized output with the original source record.
+
+**Gate:** At least two real integrations work end-to-end, with source provenance and error states visible in the UI.
+
