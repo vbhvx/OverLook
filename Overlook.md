@@ -951,3 +951,32 @@ Treat each phase as an independently testable milestone. Do not activate later p
 
 **Gate:** At least two real integrations work end-to-end, with source provenance and error states visible in the UI.
 
+### Phase 3 — Multi-layer experience
+
+- Add source-specific layer renderers.
+- Implement timeline filters.
+- Add category and source filters.
+- Add time-range selection.
+- Improve marker clustering.
+- Add layer-specific freshness states.
+- Implement partial-data behavior.
+- Add saved filters or views if needed.
+- Test map performance under realistic record counts.
+
+**Gate:** A provider failure does not hide unrelated layers, and users can filter the map without receiving unbounded data payloads.
+
+### Phase 4 — Remaining signal categories
+
+- Add aircraft integration once the provider and intended use are approved.
+- Add vessel integration once data access and licensing are verified.
+- Add satellite or Earth-observation metadata.
+- Add earthquake catalog integration.
+- Add authorized weather data.
+- Add public-camera metadata or explicitly permitted feeds.
+- Add open geographic infrastructure data.
+- Verify each category's schema and display semantics.
+- Document each provider's coverage and limitations.
+- Test independent layer failures and stale data.
+
+**Gate:** Each category has an independently tested adapter, an explicit provider status, and visible provenance.
+
