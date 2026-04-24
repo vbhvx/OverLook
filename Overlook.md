@@ -980,3 +980,31 @@ Treat each phase as an independently testable milestone. Do not activate later p
 
 **Gate:** Each category has an independently tested adapter, an explicit provider status, and visible provenance.
 
+### Phase 5 — Temporal analysis and event context
+
+- Implement historical queries where permitted.
+- Add event detail views.
+- Add nearby-signal searches.
+- Implement deterministic spatial-temporal correlation rules.
+- Preserve source records behind each association.
+- Add explanation of matching criteria.
+- Add time and distance boundaries.
+- Test false associations and time-zone edge cases.
+- Add export of selected normalized records when permitted.
+
+**Gate:** Cross-layer associations are explainable and are not presented as proven causal relationships without supporting evidence.
+
+### Phase 6 — Optional AI-assisted explanation
+
+- Define supported assistant tasks.
+- Implement approved-source retrieval.
+- Pass only the evidence needed for the current request.
+- Require structured output.
+- Associate factual claims with source references.
+- Add unsupported-claim and prompt-injection tests.
+- Prevent the assistant from generating private-person dossiers or sensitive operational targeting.
+- Make evidence and uncertainty visible.
+- Evaluate the assistant against a versioned test dataset.
+
+**Gate:** Every significant factual summary can be checked against underlying source records, and the system acknowledges missing evidence.
+
