@@ -1008,3 +1008,50 @@ Treat each phase as an independently testable milestone. Do not activate later p
 
 **Gate:** Every significant factual summary can be checked against underlying source records, and the system acknowledges missing evidence.
 
+### Phase 7 — Hardening and deployment
+
+- Run frontend and backend tests.
+- Run linting and static type checks.
+- Run database migrations against a clean environment.
+- Verify spatial query indexes.
+- Test provider rate limits and failure behavior.
+- Review source licensing and attribution.
+- Review camera handling and privacy controls.
+- Configure environment variables and secrets.
+- Test Docker startup and shutdown.
+- Verify deployed URLs and API behavior.
+- Document retention and operational recovery.
+- Complete the README and engineering handoff.
+
+---
+
+## 10. Test plan and release gates
+
+Write data-correctness tests before trusting the map.
+
+| Test | Expected result |
+|---|---|
+| Valid point geometry | Coordinates are normalized and accepted |
+| Invalid latitude or longitude | Record is rejected or quarantined |
+| Reversed coordinates | Validation or test logic catches the error where detectable |
+| Missing timestamp | Record is marked incomplete; no timestamp is invented |
+| Different source timestamp formats | Equivalent instants normalize consistently |
+| Observation time differs from ingestion time | Both remain distinct |
+| Duplicate provider record | No duplicate normalized signal is created |
+| Updated earthquake record | Source revision is handled according to its contract |
+| Missing provider fields | Record is validated, quarantined, or normalized under a documented policy |
+| Simulated aircraft position | UI marks it as simulated |
+| Stale weather response | UI shows the stale status rather than implying freshness |
+| Weather forecast | UI distinguishes forecast validity from observation time |
+| Unsupported camera URL | Feed is not embedded automatically |
+| Unauthorized provider | No production ingestion occurs |
+| Source API rate limit | Backoff or throttling occurs; the UI reports the source state |
+| One provider is down | Other working layers remain usable |
+| Empty query results | Explicit empty state; no fabricated records |
+| Large viewport request | Result count and query cost remain bounded |
+| Spatial search across the date line | Supported geometry/query behavior is correct |
+| Cross-source proximity match | Displayed as an association, not proof of causation |
+| Untrusted source text | Cannot override application controls or tool permissions |
+| Missing map attribution configuration | Release check fails for the affected provider |
+| Database migration from scratch | Schema and spatial indexes are created successfully |
+
