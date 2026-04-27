@@ -1055,3 +1055,35 @@ Write data-correctness tests before trusting the map.
 | Missing map attribution configuration | Release check fails for the affected provider |
 | Database migration from scratch | Schema and spatial indexes are created successfully |
 
+### Integration tests
+
+Test:
+
+- Provider authentication and response validation.
+- Rate limits and retries.
+- Source-specific time parsing.
+- Normalized signal persistence.
+- Duplicate record processing.
+- Spatial query correctness.
+- Timeline aggregation.
+- Partial responses.
+- Source disable and recovery.
+- Historical replay, where supported.
+- Map rendering from API fixtures.
+- Camera links and embedding restrictions.
+- Correlation record provenance.
+
+### Security tests
+
+Test for:
+
+- SSRF through malicious source URLs.
+- Injection through provider metadata.
+- Exposure of API credentials.
+- Abuse of unrestricted data-ingestion endpoints.
+- Excessive geographic query sizes.
+- Cross-user data exposure if user accounts are introduced.
+- Prompt injection if AI is enabled.
+- Unauthorized requests to disabled integrations.
+- Accidental storage of restricted media or personal information.
+
