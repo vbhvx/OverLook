@@ -1087,3 +1087,46 @@ Test for:
 - Unauthorized requests to disabled integrations.
 - Accidental storage of restricted media or personal information.
 
+### Release gate
+
+The MVP must render a coherent map from validated signals while retaining original source provenance, accurate timestamps, and visible freshness states.
+
+At least two real providers must be verified end-to-end before claiming a working multi-source real-data demonstration.
+
+Do not claim live coverage for categories that only have simulated data. Do not claim the entire world is covered because one provider supplies a global-looking map.
+
+---
+
+## 11. README and delivery checklist
+
+The README must include:
+
+- Product purpose and target use cases.
+- Screenshots of the working application.
+- Architecture diagram.
+- Technology stack.
+- Repository structure.
+- Local development instructions.
+- Environment variable reference.
+- Database and PostGIS setup.
+- Docker Compose instructions.
+- API documentation.
+- Normalized signal schema.
+- Source registry and provider status.
+- Data freshness and timestamp semantics.
+- Map-provider and data-provider attribution.
+- Licensing and usage assumptions.
+- Test execution instructions.
+- Deployment and recovery instructions.
+- Known data gaps and integration limitations.
+- Privacy and safety boundaries.
+- AI disclosure if AI tools assisted implementation or an AI feature is included.
+
+Do not commit live credentials, unauthorized datasets, private video URLs, or sensitive source material.
+
+Link to the live application only after deployment has been completed and verified.
+
+---
+
+## 12. Risks that could invalidate the result
+
