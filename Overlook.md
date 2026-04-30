@@ -1130,3 +1130,15 @@ Link to the live application only after deployment has been completed and verifi
 
 ## 12. Risks that could invalidate the result
 
+### Fragmented source semantics
+
+Two sources may describe similar-looking signals but use different identifiers, update rates, timestamp meanings, and accuracy guarantees.
+
+**Mitigation:** Build explicit provider adapters and a versioned normalized schema. Preserve original source metadata and avoid assuming that similarly named fields mean the same thing.
+
+### False real-time claims
+
+A map can look live while showing delayed or cached records.
+
+**Mitigation:** Carry observation time, ingestion time, source freshness, and simulation status through the entire pipeline. Show the last successful update for each source.
+
