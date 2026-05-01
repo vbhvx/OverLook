@@ -1142,3 +1142,15 @@ A map can look live while showing delayed or cached records.
 
 **Mitigation:** Carry observation time, ingestion time, source freshness, and simulation status through the entire pipeline. Show the last successful update for each source.
 
+### Licensing and access restrictions
+
+Public web visibility does not mean unlimited API access or permission for commercial redistribution. Map tiles, geocoding, satellite products, aircraft observations, maritime data, and weather data can have different terms.
+
+**Mitigation:** Maintain a source registry and licensing review. Disable providers whose intended use has not been verified.
+
+### Incorrect cross-source correlations
+
+Signals close in time or space may be unrelated.
+
+**Mitigation:** Use transparent matching rules, show supporting records, and describe correlations as hypotheses unless stronger evidence exists.
+
