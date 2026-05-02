@@ -1154,3 +1154,15 @@ Signals close in time or space may be unrelated.
 
 **Mitigation:** Use transparent matching rules, show supporting records, and describe correlations as hypotheses unless stronger evidence exists.
 
+### Map performance degradation
+
+Rendering every signal individually or making requests during every map movement can overwhelm the browser and providers.
+
+**Mitigation:** Use viewport queries, spatial indexes, request debouncing, marker clustering, bounded payloads, caching, and server-side aggregation.
+
+### Misleading satellite or camera information
+
+Satellite position, image acquisition, catalog publication, and imagery availability are distinct concepts. Public camera webpages may not authorize direct feed embedding.
+
+**Mitigation:** Preserve source-specific timing semantics and embed only explicitly authorized content.
+
