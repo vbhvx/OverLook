@@ -1166,3 +1166,49 @@ Satellite position, image acquisition, catalog publication, and imagery availabi
 
 **Mitigation:** Preserve source-specific timing semantics and embed only explicitly authorized content.
 
+### Unsafe or invasive surveillance
+
+Combining public signals can create inferences that individual sources do not support, especially when associated with identifiable people or sensitive facilities.
+
+**Mitigation:** Avoid private-person profiling, identity inference, unauthorized camera access, and sensitive operational targeting. Keep the product oriented toward transparent public-interest analysis and verifiable source material.
+
+### Provider outages and incomplete coverage
+
+A source can become unavailable, revise its dataset, impose new limits, or remove a feature.
+
+**Mitigation:** Isolate providers, track their status, make integrations independently disableable, and keep the remaining layers operational.
+
+---
+
+## 13. Final execution instruction
+
+Start by inspecting the repository and verifying the first data sources. Do not build a sophisticated global dashboard around unverified assumptions.
+
+Implement the first complete vertical slice:
+
+1. A working interactive map.
+2. A validated shared signal schema.
+3. Deterministic simulated records for all requested categories.
+4. At least two verified real-data adapters.
+5. Geographic and temporal filtering.
+6. Source-aware signal detail panels.
+7. Data freshness and provider-status indicators.
+8. Automated tests for normalization, spatial queries, and time handling.
+9. Reproducible local startup.
+10. Documentation of sources, limitations, and actual integration status.
+
+Then add remaining signal sources and event correlation in independently testable phases.
+
+Do not use static mock data to conceal missing live integrations. Do not invent locations, timestamps, routes, incidents, or source links. When a provider is unavailable or its usage terms are unclear, keep the integration disabled and explain exactly what remains unresolved.
+
+**The fundamental architecture is:**
+
+- Provider adapters retrieve data under verified access and usage conditions.
+- The normalization layer establishes consistent spatial and temporal semantics.
+- PostGIS stores and queries the resulting geographic records.
+- The correlation engine identifies explainable relationships between signals.
+- The frontend presents multiple layers without obscuring their provenance or limitations.
+- Optional AI explains supported evidence but does not manufacture facts.
+- Users can inspect the original source material and distinguish recorded observations from estimates and hypotheses.
+
+Build a reliable, extensible geospatial intelligence workspace that helps people form a clearer understanding of public real-world signals without pretending that incomplete data provides complete situational awareness.
