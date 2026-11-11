@@ -1,12 +1,17 @@
 # backend/app/providers/copernicus_satellite.py
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
+
+from backend.app.geospatial.validation import is_point_in_bbox, validate_coordinates
 from backend.app.providers.base import BaseProviderAdapter, compute_record_hash
 from backend.app.schemas.signals import (
-    SignalEnvelope, SignalCategory, DataStatus, GeoJSONGeometry,
-    GeometryType, SourceAttributionRef
+    DataStatus,
+    GeoJSONGeometry,
+    GeometryType,
+    SignalCategory,
+    SignalEnvelope,
+    SourceAttributionRef,
 )
-from backend.app.geospatial.validation import validate_coordinates, is_point_in_bbox
 
 # Copernicus Sentinel-2 / Sentinel-1 Real Catalog Footprints & Pass Swaths
 SATELLITE_PRODUCTS = [
@@ -125,8 +130,8 @@ class CopernicusSatelliteAdapter(BaseProviderAdapter):
                 observedAt=acquisition_time, # Physical optical/SAR capture time
                 publishedAt=acquisition_time + timedelta(minutes=45), # Catalog publish time
                 ingestedAt=now_utc,
-                dataStatus=DataStatus.ACTUAL,
-                isSimulated=False,
+                dataStatus=DataStatus.SIMULATED,  # curated sample, not fetched from the provider
+                isSimulated=True,
                 sourceUrl=prod["product_url"],
                 source=SourceAttributionRef(
                     id=self.source_id,
@@ -151,7 +156,7 @@ class CopernicusSatelliteAdapter(BaseProviderAdapter):
             signals.append(signal)
 
         self.last_sync_at = now_utc
-        self.last_status = "active"
+        self.last_status = "simulated"
         return signals
 
     async def check_health(self) -> Dict[str, Any]:

@@ -1,66 +1,58 @@
 # backend/tests/test_sources.py
+"""Source registry integrity and data-honesty guarantees."""
 import pytest
-from datetime import datetime, timezone
-from backend.app.ingestion.synchronizer import synchronizer
-from backend.app.schemas.signals import (
-    SignalEnvelope, SignalCategory, DataStatus, GeoJSONGeometry, GeometryType
-)
 
-@pytest.fixture(autouse=True)
-def setup_sync():
-    synchronizer.load_initial_fixtures()
+from backend.app.ingestion.registry import SOURCE_DEFINITIONS
+from backend.app.schemas.signals import DataStatus
 
-def test_source_registry_metadata():
-    sources = synchronizer.sources
-    assert "usgs-earthquakes" in sources
-    assert "open-meteo" in sources
-    assert "opensky-network" in sources
-    assert "global-ais-maritime" in sources
-    assert "copernicus-dataspace" in sources
-    assert "public-dot-cameras" in sources
-    assert "osm-critical-infra" in sources
+EXPECTED = {
+    "usgs-earthquakes", "open-meteo", "opensky-network", "global-ais-maritime",
+    "copernicus-dataspace", "public-dot-cameras", "osm-critical-infra",
+}
+CURATED = [sid for sid, d in SOURCE_DEFINITIONS.items() if not d.meta.isLive]
 
-    usgs = sources["usgs-earthquakes"]
+
+def test_registry_covers_all_seven_categories():
+    assert set(SOURCE_DEFINITIONS) == EXPECTED
+    assert len({d.meta.category for d in SOURCE_DEFINITIONS.values()}) == 7
+
+
+def test_registry_ids_match_adapters():
+    for sid, definition in SOURCE_DEFINITIONS.items():
+        assert definition.meta.id == sid
+        assert definition.adapter_factory().source_id == sid
+
+
+def test_usgs_license_metadata():
+    usgs = SOURCE_DEFINITIONS["usgs-earthquakes"].meta
     assert usgs.licenseStatus == "public_domain"
     assert usgs.commercialUseStatus == "unrestricted"
     assert "Data courtesy of the U.S. Geological Survey" in usgs.attributionRequirements
 
-def test_deduplication_preserves_single_signal_id():
-    now = datetime.now(timezone.utc)
-    sig1 = SignalEnvelope(
-        id="dedup-test-1",
-        sourceId="usgs-earthquakes",
-        sourceRecordId="rec-1",
-        category=SignalCategory.EARTHQUAKE,
-        signalType="seismic-event",
-        geometry=GeoJSONGeometry(type=GeometryType.POINT, coordinates=[-122.0, 37.0]),
-        latitude=37.0,
-        longitude=-122.0,
-        observedAt=now,
-        ingestedAt=now,
-        rawRecordHash="hash-v1",
-        metadata={"mag": 3.0}
-    )
-    synchronizer._signals[sig1.id] = sig1
-    init_count = len(synchronizer._signals)
 
-    # Identical record re-ingested
-    sig2 = sig1.model_copy()
-    if sig2.id in synchronizer._signals:
-        existing = synchronizer._signals[sig2.id]
-        if existing.rawRecordHash == sig2.rawRecordHash:
-            existing.lastSeenAt = now
+def test_every_source_declares_attribution_and_a_sane_interval():
+    for definition in SOURCE_DEFINITIONS.values():
+        assert definition.meta.attributionRequirements
+        assert definition.sync_interval_seconds >= 60
 
-    assert len(synchronizer._signals) == init_count
 
-def test_source_failure_isolation():
-    # If one adapter fails, synchronizer query still returns remaining active signals
-    active_sigs = synchronizer.query_signals()
-    assert len(active_sigs) > 0
-    # Earthquake signals exist
-    eqs = synchronizer.query_signals(category="earthquake")
-    assert len(eqs) > 0
-    # Weather signals exist
-    wx = synchronizer.query_signals(category="weather")
-    assert len(wx) > 0
+def test_non_live_sources_are_marked_simulated_with_a_reason():
+    assert CURATED, "expected at least one curated sample source"
+    for sid in CURATED:
+        meta = SOURCE_DEFINITIONS[sid].meta
+        assert meta.status == "simulated"
+        assert meta.disabledReason
 
+
+@pytest.mark.parametrize("source_id", CURATED)
+async def test_curated_sources_never_emit_records_labelled_as_real(source_id):
+    """
+    A source with no live integration must not produce 'actual' records:
+    presenting a hardcoded sample as a real-time observation is fabrication.
+    """
+    adapter = SOURCE_DEFINITIONS[source_id].adapter_factory()
+    signals = await adapter.fetch_signals()
+    assert signals
+    for sig in signals:
+        assert sig.isSimulated is True
+        assert sig.dataStatus == DataStatus.SIMULATED

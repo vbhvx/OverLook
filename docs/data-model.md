@@ -44,12 +44,27 @@ Every heterogeneous signal category is transformed into the canonical `SignalEnv
 }
 ```
 
-## Relational Entity Schema
+## Database Schema (PostGIS)
 
-1. **`sources`**: Provider registration, capabilities, license contracts, last sync timestamps, error states.
-2. **`source_sync_runs`**: Audit log of sync executions, records fetched, records updated, duration, and error codes.
-3. **`source_records`**: Raw provider records, external IDs, and SHA-256 fingerprints preventing duplicate signals.
-4. **`signals`**: Primary table containing normalized spatial geometries, timestamps, status, and domain metadata.
-5. **`signal_relations`**: Explicit spatial-temporal linkages between signals with distance (km), time delta (s), rule name, and methodological disclaimers.
-6. **`saved_regions`**: Preset and user-defined geographic boundaries (SF Bay, Mediterranean, English Channel, Malacca Strait, Hawaii, Tokyo Bay).
+The schema is owned by Alembic (`backend/migrations/versions/`). There are three tables:
 
+| Table | Purpose | Key indexes |
+|---|---|---|
+| `signals` | One row per normalized signal. `payload` (JSONB) holds the full envelope above. The remaining columns exist to filter, sort and index on. | `GIST(geom)`, `GIST(point)`, `(observed_at DESC, id)`, `(category, observed_at DESC)`, `(source_id)`, partial `(last_seen_at) WHERE NOT is_simulated` |
+| `source_state` | Runtime health per provider (status, last success or error, consecutive failures, circuit state), written by the worker and read by every API replica. | PK `source_id` |
+| `sync_runs` | Audit log of every sync: counts fetched, inserted, updated and rejected, plus duration and error. Pruned after 7 days. | `(source_id, started_at DESC)` |
+
+`geom` is `geometry(Geometry, 4326)` holding the true footprint (points, or satellite swath polygons), forced to 2-D. `point` is `geography(Point, 4326)` at the representative position, used for metre-accurate `ST_DWithin` radius search. `CHECK` constraints pin `category` and `data_status` to the enum values. See [ADR 0002](adr/0002-jsonb-payload-with-indexed-columns.md) for the rationale.
+
+### Ingestion semantics
+
+| Incoming record | Effect |
+|---|---|
+| New `id` | Inserted |
+| Known `id`, different `rawRecordHash` | Payload replaced, original `ingestedAt` kept, `lastSeenAt` bumped (for example, a USGS magnitude revision) |
+| Known `id`, same hash | Only `lastSeenAt` bumped |
+| `observedAt` more than 10 min in the future (non-forecast), naive timestamp, or `validUntil < validFrom` | Rejected and counted in `recordsRejected` |
+
+**Retention:** live signals not seen for `SIGNAL_RETENTION_HOURS` (default 72) are deleted every 10 minutes. Simulated fixtures are never pruned.
+
+Correlations (`SignalRelation`, `InvestigationEvent`) are derived at query time from the rules in `backend/app/correlation/engine.py`. They are not stored, so they always reflect current data and the current rule version.

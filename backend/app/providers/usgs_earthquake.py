@@ -1,13 +1,18 @@
 # backend/app/providers/usgs_earthquake.py
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
-import httpx
-from backend.app.providers.base import BaseProviderAdapter, compute_record_hash
-from backend.app.schemas.signals import (
-    SignalEnvelope, SignalCategory, DataStatus, GeoJSONGeometry,
-    GeometryType, SourceAttributionRef
-)
+
 from backend.app.geospatial.validation import validate_coordinates
+from backend.app.providers.base import BaseProviderAdapter, compute_record_hash, logger
+from backend.app.schemas.signals import (
+    DataStatus,
+    GeoJSONGeometry,
+    GeometryType,
+    SignalCategory,
+    SignalEnvelope,
+    SourceAttributionRef,
+)
+
 
 class USGSEarthquakeAdapter(BaseProviderAdapter):
     source_id = "usgs-earthquakes"
@@ -35,31 +40,31 @@ class USGSEarthquakeAdapter(BaseProviderAdapter):
                     data = resp.json()
                     features = data.get("features", [])
                     now_utc = datetime.now(timezone.utc)
-                    
+
                     for feat in features:
                         try:
                             f_id = feat.get("id")
                             props = feat.get("properties", {})
                             geom = feat.get("geometry", {})
                             coords = geom.get("coordinates", [])
-                            
+
                             if len(coords) < 2:
                                 continue
-                            
+
                             lon, lat = validate_coordinates(coords[0], coords[1])
                             depth_km = float(coords[2]) if len(coords) > 2 else None
-                            
+
                             time_ms = props.get("time")
                             if time_ms is None:
                                 continue
                             observed_at = datetime.fromtimestamp(time_ms / 1000.0, tz=timezone.utc)
-                            
+
                             updated_ms = props.get("updated")
                             published_at = (
                                 datetime.fromtimestamp(updated_ms / 1000.0, tz=timezone.utc)
                                 if updated_ms else None
                             )
-                            
+
                             mag = props.get("mag")
                             mag_type = props.get("magType")
                             place = props.get("place", "Unknown Location")
@@ -67,9 +72,9 @@ class USGSEarthquakeAdapter(BaseProviderAdapter):
                             url = props.get("url")
                             tsunami = bool(props.get("tsunami", 0))
                             alert = props.get("alert") # green, yellow, orange, red
-                            
+
                             raw_hash = compute_record_hash(feat)
-                            
+
                             signal = SignalEnvelope(
                                 id=f"eq-{f_id}",
                                 sourceId=self.source_id,
@@ -112,9 +117,9 @@ class USGSEarthquakeAdapter(BaseProviderAdapter):
                             )
                             signals.append(signal)
                         except Exception:
-                            # Skip malformed individual features without aborting the layer
+                            logger.debug("skipping malformed record", extra={"source": self.source_id}, exc_info=True)
                             continue
-                            
+
                     self.last_sync_at = now_utc
                     self.last_status = "active"
                     self.last_error = None
@@ -124,7 +129,7 @@ class USGSEarthquakeAdapter(BaseProviderAdapter):
         except Exception as e:
             self.last_status = "degraded"
             self.last_error = str(e)
-            
+
         return signals
 
     async def check_health(self) -> Dict[str, Any]:

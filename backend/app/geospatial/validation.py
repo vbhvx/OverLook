@@ -1,6 +1,7 @@
 # backend/app/geospatial/validation.py
 import math
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Tuple
+
 
 def haversine_distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """
@@ -25,7 +26,7 @@ def validate_coordinates(lon: float, lat: float) -> Tuple[float, float]:
     """
     if lon is None or lat is None:
         raise ValueError("Coordinates cannot be None")
-    
+
     if math.isnan(lon) or math.isinf(lon):
         raise ValueError(f"Longitude is not a finite number: {lon}")
     if math.isnan(lat) or math.isinf(lat):
@@ -40,7 +41,7 @@ def validate_coordinates(lon: float, lat: float) -> Tuple[float, float]:
 
     if not (-180.0 <= lon <= 180.0):
         raise ValueError(f"Longitude {lon} out of range [-180.0, 180.0]")
-    
+
     if not (-90.0 <= lat <= 90.0):
         raise ValueError(f"Latitude {lat} out of range [-90.0, 90.0]")
 
@@ -53,13 +54,13 @@ def is_point_in_bbox(lon: float, lat: float, bbox: List[float]) -> bool:
     """
     if len(bbox) < 4:
         raise ValueError("Bounding box must contain [west, south, east, north]")
-    
+
     west, south, east, north = bbox[0], bbox[1], bbox[2], bbox[3]
-    
+
     # Check latitude bounds
     if not (south <= lat <= north):
         return False
-        
+
     # Check longitude bounds (handling antimeridian if west > east)
     if west <= east:
         return west <= lon <= east
@@ -73,15 +74,15 @@ def validate_geometry(geom: Dict[str, Any]) -> Dict[str, Any]:
     """
     if not isinstance(geom, dict):
         raise ValueError("Geometry must be a dictionary")
-    
+
     geom_type = geom.get("type")
     if geom_type not in ("Point", "Polygon", "LineString", "MultiPoint"):
         raise ValueError(f"Unsupported geometry type: {geom_type}")
-    
+
     coords = geom.get("coordinates")
     if coords is None:
         raise ValueError("Geometry missing 'coordinates'")
-        
+
     if geom_type == "Point":
         if not isinstance(coords, (list, tuple)) or len(coords) < 2:
             raise ValueError(f"Invalid Point coordinates: {coords}")
@@ -89,7 +90,7 @@ def validate_geometry(geom: Dict[str, Any]) -> Dict[str, Any]:
         alt = coords[2] if len(coords) > 2 else None
         res_coords = [lon, lat] if alt is None else [lon, lat, alt]
         return {"type": "Point", "coordinates": res_coords}
-        
+
     elif geom_type == "Polygon":
         if not isinstance(coords, (list, tuple)) or len(coords) == 0:
             raise ValueError("Polygon must have at least one linear ring")
@@ -106,6 +107,6 @@ def validate_geometry(geom: Dict[str, Any]) -> Dict[str, Any]:
                 v_ring.append(v_ring[0]) # Auto-close if needed
             validated_rings.append(v_ring)
         return {"type": "Polygon", "coordinates": validated_rings}
-        
+
     return geom
 

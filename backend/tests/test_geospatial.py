@@ -1,9 +1,14 @@
 # backend/tests/test_geospatial.py
+
 import pytest
-import math
+
 from backend.app.geospatial.validation import (
-    validate_coordinates, is_point_in_bbox, haversine_distance_km, validate_geometry
+    haversine_distance_km,
+    is_point_in_bbox,
+    validate_coordinates,
+    validate_geometry,
 )
+
 
 def test_valid_point_coordinates():
     lon, lat = validate_coordinates(-122.4194, 37.7749)

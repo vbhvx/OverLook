@@ -1,13 +1,17 @@
 # backend/app/providers/open_meteo.py
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
-import httpx
-from backend.app.providers.base import BaseProviderAdapter, compute_record_hash
-from backend.app.schemas.signals import (
-    SignalEnvelope, SignalCategory, DataStatus, GeoJSONGeometry,
-    GeometryType, SourceAttributionRef
-)
+
 from backend.app.geospatial.validation import validate_coordinates
+from backend.app.providers.base import BaseProviderAdapter, compute_record_hash, logger
+from backend.app.schemas.signals import (
+    DataStatus,
+    GeoJSONGeometry,
+    GeometryType,
+    SignalCategory,
+    SignalEnvelope,
+    SourceAttributionRef,
+)
 
 WEATHER_CODE_MAP = {
     0: "Clear sky",
@@ -58,7 +62,7 @@ class OpenMeteoAdapter(BaseProviderAdapter):
     async def fetch_signals(self, bbox: Optional[List[float]] = None) -> List[SignalEnvelope]:
         signals: List[SignalEnvelope] = []
         now_utc = datetime.now(timezone.utc)
-        
+
         # Filter stations if bbox provided
         target_stations = WEATHER_STATIONS
         if bbox and len(bbox) >= 4:
@@ -88,11 +92,11 @@ class OpenMeteoAdapter(BaseProviderAdapter):
                     if resp.status_code == 200:
                         data = resp.json()
                         current = data.get("current", {})
-                        
+
                         lon, lat = validate_coordinates(station["lon"], station["lat"])
                         code = current.get("weather_code", 0)
                         desc = WEATHER_CODE_MAP.get(code, f"Code {code}")
-                        
+
                         # 1. Observed Real-time Signal
                         obs_signal = SignalEnvelope(
                             id=f"wx-obs-{station['name'].lower().replace(' ', '-')}",
@@ -138,20 +142,20 @@ class OpenMeteoAdapter(BaseProviderAdapter):
                             lastSeenAt=now_utc
                         )
                         signals.append(obs_signal)
-                        
+
                         # 2. Hourly Forecast Signal (Explicitly labeled as forecast, valid 3 hours ahead)
                         hourly = data.get("hourly", {})
                         h_times = hourly.get("time", [])
                         h_temps = hourly.get("temperature_2m", [])
                         h_codes = hourly.get("weather_code", [])
                         h_precip = hourly.get("precipitation_probability", [])
-                        
+
                         if len(h_times) > 3:
                             f_idx = 3 # 3 hours ahead
                             f_valid_from = now_utc + timedelta(hours=3)
                             f_valid_until = now_utc + timedelta(hours=4)
                             f_code = h_codes[f_idx] if len(h_codes) > f_idx else 0
-                            
+
                             fcst_signal = SignalEnvelope(
                                 id=f"wx-fcst-{station['name'].lower().replace(' ', '-')}",
                                 sourceId=self.source_id,
@@ -193,7 +197,8 @@ class OpenMeteoAdapter(BaseProviderAdapter):
                             )
                             signals.append(fcst_signal)
 
-                except Exception as ex:
+                except Exception:
+                    logger.debug("skipping malformed station", extra={"source": self.source_id}, exc_info=True)
                     continue
 
         self.last_sync_at = now_utc

@@ -1,18 +1,14 @@
 // frontend/src/components/TimelinePanel.tsx
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   Play,
   Pause,
   RotateCcw,
   StepForward,
   Clock,
-  Filter,
   Search,
-  Calendar,
-  Layers,
-  Sparkles
 } from 'lucide-react';
-import { TimelineResponse, TimelineBucket, SignalCategory } from '../types';
+import { TimelineResponse } from '../types';
 
 interface TimelinePanelProps {
   timeline: TimelineResponse | null;
@@ -107,6 +103,22 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
               </button>
             ))}
           </div>
+
+          {/* Category Filter */}
+          <select
+            aria-label="Filter by category"
+            value={selectedCategory ?? ''}
+            onChange={(e) => onSelectCategory(e.target.value || null)}
+            className="bg-slate-950/80 border border-panel-border rounded-lg px-2 py-1 text-xs font-mono text-slate-300 capitalize"
+            style={selectedCategory ? { color: CATEGORY_COLORS[selectedCategory] } : undefined}
+          >
+            <option value="">All categories</option>
+            {Object.keys(CATEGORY_COLORS).map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </select>
 
           {/* Status Filter Toggle */}
           <div className="flex items-center space-x-1 bg-slate-950/80 border border-panel-border rounded-lg p-0.5 text-xs font-mono">

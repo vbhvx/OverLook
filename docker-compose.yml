@@ -1,56 +1,117 @@
-version: '3.8'
+# OverLook — full stack.
+#   docker compose up --build                          core stack (UI on http://localhost:8080)
+#   docker compose --profile observability up --build  + Prometheus (9090) and Grafana (3001)
+
+x-backend: &backend
+  build:
+    context: .
+    dockerfile: backend/Dockerfile
+  image: overlook-backend:local
+  environment: &backend-env
+    ENVIRONMENT: ${ENVIRONMENT:-production}
+    DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-overlook}:${POSTGRES_PASSWORD:-overlook}@postgis:5432/${POSTGRES_DB:-overlook}
+    CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080}
+    LOG_FORMAT: json
+    LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    OPENSKY_USERNAME: ${OPENSKY_USERNAME:-}
+    OPENSKY_PASSWORD: ${OPENSKY_PASSWORD:-}
+  restart: unless-stopped
 
 services:
   postgis:
     image: postgis/postgis:16-3.4
-    container_name: overlook-postgis
     environment:
-      POSTGRES_DB: overlook
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: ${POSTGRES_DB:-overlook}
+      POSTGRES_USER: ${POSTGRES_USER:-overlook}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-overlook}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"   # local tooling only; never exposed publicly
     volumes:
       - postgis_data:/var/lib/postgresql/data
-      - ./database/migrations/001_initial_schema.sql:/docker-entrypoint-initdb.d/001_initial_schema.sql:ro
-      - ./database/seeds/001_seed_sources_and_layers.sql:/docker-entrypoint-initdb.d/002_seed_sources.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d overlook"]
+      # TCP, not the unix socket: during first-boot init Postgres runs a temporary
+      # socket-only server, and a socket probe would report ready too early.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+    restart: unless-stopped
 
-  backend:
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
-    container_name: overlook-backend
-    environment:
-      - HOST=0.0.0.0
-      - PORT=8000
-      - ENVIRONMENT=production
-      - DATABASE_URL=postgresql+asyncpg://postgres:postgrespassword@postgis:5432/overlook
-      - ENABLE_BACKGROUND_SYNC=true
-      - DEFAULT_SYNC_INTERVAL_SECONDS=300
-    ports:
-      - "8000:8000"
+  migrate:
+    <<: *backend
+    command: ["alembic", "-c", "backend/alembic.ini", "upgrade", "head"]
+    restart: "no"
+    healthcheck:
+      disable: true
     depends_on:
       postgis:
         condition: service_healthy
-    restart: unless-stopped
 
-  frontend:
+  api:
+    <<: *backend
+    environment:
+      <<: *backend-env
+      # Ingestion runs in the worker; API replicas stay stateless and scale freely.
+      ENABLE_BACKGROUND_SYNC: "false"
+      SEED_FIXTURES: "false"
+      TRUSTED_PROXY_COUNT: "1"
+    expose: ["8000"]
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  worker:
+    <<: *backend
+    command: ["python", "-m", "backend.app.worker"]
+    environment:
+      <<: *backend-env
+      SEED_FIXTURES: "true"
+    expose: ["9100"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:9100/metrics', timeout=2)"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+    # Scale with `--scale worker=2`: the standby waits on the advisory lock.
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  web:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
-    container_name: overlook-frontend
+    image: overlook-web:local
     ports:
-      - "80:80"
-      - "3000:80"
+      - "8080:8080"
     depends_on:
-      - backend
+      api:
+        condition: service_healthy
     restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    profiles: ["observability"]
+    volumes:
+      - ./deploy/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./deploy/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+    ports:
+      - "127.0.0.1:9090:9090"
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    profiles: ["observability"]
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+    volumes:
+      - ./deploy/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./deploy/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "127.0.0.1:3001:3000"
+    depends_on: [prometheus]
 
 volumes:
   postgis_data:
-
