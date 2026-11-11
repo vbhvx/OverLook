@@ -2,16 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import {
   Radio,
-  Layers,
   Database,
   Network,
   Globe2,
   Clock,
-  Sparkles,
-  AlertTriangle,
   RefreshCw
 } from 'lucide-react';
 import { SavedRegion, MapSummaryResponse } from '../types';
+import type { StreamStatus } from '../hooks/useEventStream';
 
 interface NavbarProps {
   summary: MapSummaryResponse | null;
@@ -23,7 +21,14 @@ interface NavbarProps {
   onRefreshAll: () => void;
   isRefreshing: boolean;
   eventCount: number;
+  streamStatus: StreamStatus;
 }
+
+const STREAM_BADGE: Record<StreamStatus, { label: string; dot: string; title: string }> = {
+  live: { label: 'LIVE', dot: 'bg-emerald-400', title: 'Receiving live updates from the ingestion worker' },
+  connecting: { label: 'CONNECTING', dot: 'bg-amber-400', title: 'Opening live update stream' },
+  reconnecting: { label: 'POLLING', dot: 'bg-amber-400', title: 'Live stream unavailable; refreshing periodically' }
+};
 
 export const Navbar: React.FC<NavbarProps> = ({
   summary,
@@ -34,8 +39,10 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenSources,
   onRefreshAll,
   isRefreshing,
-  eventCount
+  eventCount,
+  streamStatus
 }) => {
+  const badge = STREAM_BADGE[streamStatus];
   const [utcTime, setUtcTime] = useState<string>('');
 
   useEffect(() => {
@@ -137,6 +144,15 @@ export const Navbar: React.FC<NavbarProps> = ({
           <Database className="w-3.5 h-3.5 text-slate-400" />
           <span className="hidden sm:inline">Source Registry</span>
         </button>
+
+        {/* Live stream status */}
+        <div
+          title={badge.title}
+          className="hidden sm:flex items-center space-x-1.5 px-2 py-1 rounded-lg bg-slate-950/70 border border-panel-border text-[10px] font-mono text-slate-300"
+        >
+          <span className={`w-1.5 h-1.5 rounded-full ${badge.dot} ${streamStatus === 'live' ? 'animate-pulse' : ''}`} />
+          <span>{badge.label}</span>
+        </div>
 
         {/* UTC Clock */}
         <div className="hidden sm:flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-slate-950/70 border border-panel-border text-xs text-slate-400 font-mono">

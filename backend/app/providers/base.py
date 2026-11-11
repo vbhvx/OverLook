@@ -2,11 +2,18 @@
 import abc
 import hashlib
 import json
+import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+
 import httpx
-from backend.app.schemas.signals import SignalEnvelope, DataStatus
+
 from backend.app.config import settings
+from backend.app.schemas.signals import SignalEnvelope
+
+# Adapters log skipped records here; enable DEBUG to see what upstream sent us.
+logger = logging.getLogger("overlook.providers")
+
 
 def compute_record_hash(raw_data: Any) -> str:
     """Computes a deterministic SHA-256 hash for raw source record deduplication."""
@@ -43,7 +50,7 @@ class BaseProviderAdapter(abc.ABC):
         return httpx.AsyncClient(
             timeout=settings.PROVIDER_TIMEOUT_SECONDS,
             headers={
-                "User-Agent": f"OverLook-Situational-Awareness/1.0 (+https://github.com/overlook-intel)"
+                "User-Agent": "OverLook-Situational-Awareness/1.0 (+https://github.com/overlook-intel)"
             }
         )
 

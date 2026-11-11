@@ -1,8 +1,8 @@
 # backend/tests/test_time_handling.py
-from datetime import datetime, timezone, timedelta
-from backend.app.schemas.signals import (
-    SignalEnvelope, SignalCategory, DataStatus, GeoJSONGeometry, GeometryType
-)
+from datetime import datetime, timezone
+
+from backend.app.schemas.signals import DataStatus, GeoJSONGeometry, GeometryType, SignalCategory, SignalEnvelope
+
 
 def test_distinct_temporal_semantics():
     t_obs = datetime(2026, 11, 10, 10, 0, 0, tzinfo=timezone.utc)

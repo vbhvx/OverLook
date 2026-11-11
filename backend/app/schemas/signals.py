@@ -1,9 +1,10 @@
 # backend/app/schemas/signals.py
+from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
-from datetime import datetime
+
 from pydantic import BaseModel, Field, field_validator
-import math
+
 
 class SignalCategory(str, Enum):
     AIRCRAFT = "aircraft"
@@ -62,23 +63,23 @@ class SignalEnvelope(BaseModel):
     latitude: float
     longitude: float
     altitudeM: Optional[float] = None
-    
+
     # Temporal normalization
     observedAt: datetime = Field(..., description="Timestamp of physical observation in UTC")
     publishedAt: Optional[datetime] = Field(None, description="Timestamp source published the record")
     ingestedAt: datetime = Field(..., description="Timestamp record was ingested by OverLook")
     validFrom: Optional[datetime] = Field(None, description="Start of validity interval")
     validUntil: Optional[datetime] = Field(None, description="End of validity interval")
-    
+
     # Quality & Provenance
     dataStatus: DataStatus = Field(DataStatus.ACTUAL, description="Data state")
     isSimulated: bool = Field(False, description="Flag indicating simulated demonstration fixture")
     sourceUrl: Optional[str] = Field(None, description="URL of source record or provider portal")
     source: Optional[SourceAttributionRef] = None
-    
+
     # Category-specific normalized attributes
     metadata: Dict[str, Any] = Field(default_factory=dict)
-    
+
     # Audit & Tracking
     rawRecordHash: Optional[str] = None
     schemaVersion: str = "1.0.0"

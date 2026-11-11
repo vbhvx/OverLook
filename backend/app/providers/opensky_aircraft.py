@@ -1,14 +1,19 @@
 # backend/app/providers/opensky_aircraft.py
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
-import httpx
-from backend.app.providers.base import BaseProviderAdapter, compute_record_hash
-from backend.app.schemas.signals import (
-    SignalEnvelope, SignalCategory, DataStatus, GeoJSONGeometry,
-    GeometryType, SourceAttributionRef
-)
-from backend.app.geospatial.validation import validate_coordinates
+
 from backend.app.config import settings
+from backend.app.geospatial.validation import validate_coordinates
+from backend.app.providers.base import BaseProviderAdapter, compute_record_hash, logger
+from backend.app.schemas.signals import (
+    DataStatus,
+    GeoJSONGeometry,
+    GeometryType,
+    SignalCategory,
+    SignalEnvelope,
+    SourceAttributionRef,
+)
+
 
 class OpenSkyAircraftAdapter(BaseProviderAdapter):
     source_id = "opensky-network"
@@ -45,7 +50,7 @@ class OpenSkyAircraftAdapter(BaseProviderAdapter):
         try:
             async with self.get_http_client() as client:
                 resp = await client.get(self.API_URL, params=params, auth=auth)
-                
+
                 if resp.status_code == 200:
                     data = resp.json()
                     states = data.get("states") or []
@@ -77,7 +82,7 @@ class OpenSkyAircraftAdapter(BaseProviderAdapter):
                                 continue
 
                             lon, lat = validate_coordinates(float(lon_val), float(lat_val))
-                            
+
                             pos_time_epoch = s[3]
                             pos_observed_at = (
                                 datetime.fromtimestamp(pos_time_epoch, tz=timezone.utc)
@@ -102,7 +107,7 @@ class OpenSkyAircraftAdapter(BaseProviderAdapter):
                                 ingestedAt=now_utc,
                                 dataStatus=DataStatus.ACTUAL,
                                 isSimulated=False,
-                                sourceUrl=f"https://opensky-network.org/",
+                                sourceUrl="https://opensky-network.org/",
                                 source=SourceAttributionRef(
                                     id=self.source_id,
                                     name=self.name,
@@ -125,6 +130,7 @@ class OpenSkyAircraftAdapter(BaseProviderAdapter):
                             )
                             signals.append(signal)
                         except Exception:
+                            logger.debug("skipping malformed record", extra={"source": self.source_id}, exc_info=True)
                             continue
 
                     self.last_sync_at = now_utc

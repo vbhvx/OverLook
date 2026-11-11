@@ -1,5 +1,5 @@
 // frontend/src/components/MapContainer.tsx
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef } from 'react';
 import maplibregl from 'maplibre-gl';
 import { SignalEnvelope, MapLayerSpec } from '../types';
 
@@ -17,7 +17,6 @@ interface MapContainerProps {
 export const MapContainer: React.FC<MapContainerProps> = ({
   signals,
   activeLayers,
-  layers,
   onSelectSignal,
   selectedSignal,
   onViewportChange,

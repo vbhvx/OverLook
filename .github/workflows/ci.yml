@@ -1,0 +1,113 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend (Python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12"]
+    services:
+      postgis:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_DB: overlook_test
+          POSTGRES_USER: overlook
+          POSTGRES_PASSWORD: overlook
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -h 127.0.0.1 -U overlook -d overlook_test"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      DATABASE_URL: postgresql+asyncpg://overlook:overlook@localhost:5432/overlook_test
+      OVERLOOK_TEST_DATABASE_URL: postgresql+asyncpg://overlook:overlook@localhost:5432/overlook_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+      - run: pip install -r backend/requirements-dev.txt
+      - name: Lint
+        run: ruff check backend
+      - name: Migrate (up, down, up — migrations must be reversible)
+        run: |
+          alembic -c backend/alembic.ini upgrade head
+          alembic -c backend/alembic.ini downgrade base
+          alembic -c backend/alembic.ini upgrade head
+      - name: Test (memory + PostGIS contract suites)
+        run: pytest --cov --cov-report=term --cov-report=xml --cov-fail-under=85
+      - uses: actions/upload-artifact@v4
+        if: matrix.python == '3.12'
+        with:
+          name: coverage-backend
+          path: coverage.xml
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Audit runtime dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+  images:
+    name: Container images
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Validate compose file
+        run: docker compose --profile observability config --quiet
+      - name: Build backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: backend/Dockerfile
+          tags: overlook-backend:ci
+          load: true
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+      - name: Build web image
+        uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          tags: overlook-web:ci
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,mode=max,scope=web
+      - name: Smoke test full stack
+        run: |
+          docker compose up -d --wait --wait-timeout 180 web worker
+          curl -fsS localhost:8080/api/v1/health/ready
+          curl -fsS "localhost:8080/api/v1/signals?limit=1" | grep -q '"items"'
+      - name: Logs on failure
+        if: failure()
+        run: docker compose logs --no-color

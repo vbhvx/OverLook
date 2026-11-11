@@ -1,5 +1,5 @@
 // frontend/src/App.tsx
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Navbar } from './components/Navbar';
 import { LayerControl } from './components/LayerControl';
 import { MapContainer } from './components/MapContainer';
@@ -24,8 +24,16 @@ import {
   fetchInvestigationEvents,
   fetchTimeline,
   fetchMapSummary,
-  triggerSourceSync
+  triggerSourceSync,
+  isAbortError
 } from './api/client';
+import { useEventStream } from './hooks/useEventStream';
+import { useDebouncedValue } from './hooks/useDebouncedValue';
+
+// Polling is only a fallback for when the live event stream is unavailable.
+const FALLBACK_POLL_MS = 60_000;
+const VIEWPORT_DEBOUNCE_MS = 300;
+const STREAM_REFRESH_DEBOUNCE_MS = 1_000;
 
 export const App: React.FC = () => {
   // Core State
@@ -84,43 +92,71 @@ export const App: React.FC = () => {
       .catch((err) => console.error('Failed to load initial metadata:', err));
   }, []);
 
+  // Panning fires many viewport changes; only query once the map settles.
+  const debouncedBbox = useDebouncedValue(currentBbox, VIEWPORT_DEBOUNCE_MS);
+  const inFlight = useRef<AbortController | null>(null);
+
   // Load Signals & Timeline based on current filters
   const loadSignals = useCallback(async () => {
+    // Cancel the previous load so a slow, stale response can't overwrite a newer one.
+    inFlight.current?.abort();
+    const controller = new AbortController();
+    inFlight.current = controller;
     try {
-      const bboxStr = currentBbox ? currentBbox.join(',') : undefined;
-      const res = await fetchSignals({
-        bbox: bboxStr,
-        category: selectedCategory || undefined,
-        data_status: selectedStatus || undefined,
-        limit: 500
-      });
+      const [res, tl, sum] = await Promise.all([
+        fetchSignals(
+          {
+            bbox: debouncedBbox ? debouncedBbox.join(',') : undefined,
+            category: selectedCategory || undefined,
+            data_status: selectedStatus || undefined,
+            limit: 500
+          },
+          controller.signal
+        ),
+        fetchTimeline(
+          {
+            hours: selectedHours,
+            interval_hours: selectedHours > 24 ? 6 : 1,
+            category: selectedCategory || undefined
+          },
+          controller.signal
+        ),
+        fetchMapSummary(controller.signal)
+      ]);
       setSignals(res.items);
-
-      const tl = await fetchTimeline({
-        hours: selectedHours,
-        interval_hours: selectedHours > 24 ? 6 : 1,
-        category: selectedCategory || undefined
-      });
       setTimeline(tl);
-
-      const sum = await fetchMapSummary();
       setSummary(sum);
     } catch (err) {
-      console.error('Error fetching signals:', err);
+      if (!isAbortError(err)) console.error('Error fetching signals:', err);
     }
-  }, [currentBbox, selectedCategory, selectedStatus, selectedHours]);
+  }, [debouncedBbox, selectedCategory, selectedStatus, selectedHours]);
 
   useEffect(() => {
     loadSignals();
   }, [loadSignals]);
 
-  // Periodic Auto-refresh (every 30s)
-  useEffect(() => {
-    const timer = setInterval(() => {
+  useEffect(() => () => inFlight.current?.abort(), []);
+
+  // Live updates: the worker announces ingested changes; coalesce bursts into one refresh.
+  const streamRefreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const streamStatus = useEventStream(() => {
+    if (streamRefreshTimer.current) clearTimeout(streamRefreshTimer.current);
+    streamRefreshTimer.current = setTimeout(() => {
       loadSignals();
-    }, 30000);
+      fetchSources().then(setSources).catch(() => undefined);
+    }, STREAM_REFRESH_DEBOUNCE_MS);
+  });
+
+  useEffect(() => () => {
+    if (streamRefreshTimer.current) clearTimeout(streamRefreshTimer.current);
+  }, []);
+
+  // Fallback polling, only while the stream is down.
+  useEffect(() => {
+    if (streamStatus === 'live') return;
+    const timer = setInterval(loadSignals, FALLBACK_POLL_MS);
     return () => clearInterval(timer);
-  }, [loadSignals]);
+  }, [loadSignals, streamStatus]);
 
   // Toggle Layer Visibility
   const handleToggleLayer = (layerId: string) => {
@@ -159,11 +195,12 @@ export const App: React.FC = () => {
   const handleRefreshAll = async () => {
     setIsRefreshing(true);
     try {
-      for (const src of sources) {
-        if (src.status !== 'disabled') {
-          await triggerSourceSync(src.id);
-        }
-      }
+      // One provider failing (or still in its cooldown) must not block the rest.
+      const results = await Promise.allSettled(
+        sources.filter((src) => src.status !== 'disabled').map((src) => triggerSourceSync(src.id))
+      );
+      const failed = results.filter((r) => r.status === 'rejected').length;
+      if (failed) console.warn(`${failed} source sync(s) did not run`);
       await loadSignals();
       const updatedSources = await fetchSources();
       setSources(updatedSources);
@@ -220,6 +257,7 @@ export const App: React.FC = () => {
         onRefreshAll={handleRefreshAll}
         isRefreshing={isRefreshing}
         eventCount={events.length}
+        streamStatus={streamStatus}
       />
 
       {/* Main Geospatial Intelligence Map Workspace */}

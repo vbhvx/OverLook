@@ -51,5 +51,7 @@ Thumbs.db
 # Test & coverage
 .pytest_cache/
 .coverage
+coverage.xml
 htmlcov/
+frontend/coverage/
 
