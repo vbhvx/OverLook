@@ -10,7 +10,6 @@ class Settings(BaseSettings):
     APP_VERSION: str = "1.1.0"
     API_V1_PREFIX: str = "/api/v1"
 
-    HOST: str = "0.0.0.0"
     PORT: int = 8000
     DEBUG: bool = False
     ENVIRONMENT: Literal["development", "test", "staging", "production"] = "development"
@@ -38,8 +37,6 @@ class Settings(BaseSettings):
 
     # Ingestion
     PROVIDER_TIMEOUT_SECONDS: float = 10.0
-    PROVIDER_CACHE_TTL_SECONDS: int = 120
-    DEFAULT_SYNC_INTERVAL_SECONDS: int = 300
     # Run the scheduler inside the API process. Fine for a single instance;
     # multi-replica deployments run `python -m backend.app.worker` instead.
     ENABLE_BACKGROUND_SYNC: bool = True
@@ -60,8 +57,6 @@ class Settings(BaseSettings):
 
     # Query Bounds
     MAX_QUERY_RESULTS: int = 1000
-    DEFAULT_QUERY_RESULTS: int = 250
-    MAX_BBOX_DIAGONAL_KM: float = 20000.0
 
     # Credentials (Optional)
     OPENSKY_USERNAME: str = ""

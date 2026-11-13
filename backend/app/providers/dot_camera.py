@@ -1,6 +1,6 @@
 # backend/app/providers/dot_camera.py
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from backend.app.geospatial.validation import is_point_in_bbox, validate_coordinates
 from backend.app.providers.base import BaseProviderAdapter, compute_record_hash
@@ -145,13 +145,3 @@ class DOTCameraAdapter(BaseProviderAdapter):
         self.last_sync_at = now_utc
         self.last_status = "simulated"
         return signals
-
-    async def check_health(self) -> Dict[str, Any]:
-        return {
-            "sourceId": self.source_id,
-            "status": "healthy",
-            "registeredCameras": len(PUBLIC_CAMERAS),
-            "lastSyncAt": self.last_sync_at,
-            "isLive": True
-        }
-

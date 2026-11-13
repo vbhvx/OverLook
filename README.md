@@ -114,9 +114,9 @@ backend/app/
   container.py    composition root shared by API and worker
   worker.py       standalone ingestion process
 backend/migrations/   Alembic (hand-written SQL: PostGIS types, partial & GiST indexes)
-frontend/         React + MapLibre UI, nginx config
+frontend/src/     React + MapLibre UI: api/ client, hooks/ state, lib/ pure logic, components/ views
 deploy/           Prometheus scrape config + alert rules, Grafana dashboard
-docs/             architecture, API, data model, sources, deployment, ADRs
+docs/             architecture, frontend, API, data model, sources, deployment, ADRs
 ```
 
 ## Limitations

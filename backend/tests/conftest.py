@@ -1,7 +1,7 @@
 # backend/tests/conftest.py
 import os
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 import pytest
 from fastapi.testclient import TestClient
@@ -83,10 +83,6 @@ class FakeAdapter(BaseProviderAdapter):
         self.last_error = None
         return list(self.signals)
 
-    async def check_health(self) -> Dict[str, Any]:
-        return {"status": self.last_status}
-
-
 @pytest.fixture
 def test_settings() -> Settings:
     return Settings(
@@ -102,9 +98,6 @@ def test_settings() -> Settings:
 
 @pytest.fixture
 def client(test_settings):
-    from backend.app.api.v1 import sources
-
-    sources._last_manual_sync.clear()
     app = create_app(test_settings, build_container(test_settings))
     with TestClient(app) as c:
         yield c

@@ -175,9 +175,6 @@ def test_map_summary(client):
 
 @pytest.fixture
 def sync_client(test_settings):
-    from backend.app.api.v1 import sources
-
-    sources._last_manual_sync.clear()
     adapter = FakeAdapter([make_signal("eq-live-1")])
     settings = test_settings.model_copy(update={"MANUAL_SYNC_COOLDOWN_SECONDS": 60})
     container = build_container(settings, adapters={"usgs-earthquakes": adapter})

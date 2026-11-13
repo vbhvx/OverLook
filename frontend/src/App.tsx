@@ -1,5 +1,6 @@
 // frontend/src/App.tsx
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+// Composition root of the map workspace: view state lives here, server state in useWorkspaceData.
+import React, { useMemo, useState } from 'react';
 import { Navbar } from './components/Navbar';
 import { LayerControl } from './components/LayerControl';
 import { MapContainer } from './components/MapContainer';
@@ -7,324 +8,130 @@ import { SignalDetailPanel } from './components/SignalDetailPanel';
 import { TimelinePanel } from './components/TimelinePanel';
 import { InvestigationModal } from './components/InvestigationModal';
 import { SourceRegistryModal } from './components/SourceRegistryModal';
-import {
-  SignalEnvelope,
-  MapLayerSpec,
-  SourceRegistryItem,
-  SavedRegion,
-  InvestigationEvent,
-  TimelineResponse,
-  MapSummaryResponse
-} from './types';
-import {
-  fetchSignals,
-  fetchLayers,
-  fetchSources,
-  fetchRegions,
-  fetchInvestigationEvents,
-  fetchTimeline,
-  fetchMapSummary,
-  triggerSourceSync,
-  isAbortError
-} from './api/client';
-import { useEventStream } from './hooks/useEventStream';
-import { useDebouncedValue } from './hooks/useDebouncedValue';
+import { NoticeStack } from './components/NoticeStack';
+import { useNotices } from './hooks/useNotices';
+import { useSourceSync } from './hooks/useSourceSync';
+import { useWorkspaceData, type BBox } from './hooks/useWorkspaceData';
+import { filterSignals } from './lib/filterSignals';
+import type { SavedRegion, SignalEnvelope } from './types';
 
-// Polling is only a fallback for when the live event stream is unavailable.
-const FALLBACK_POLL_MS = 60_000;
-const VIEWPORT_DEBOUNCE_MS = 300;
-const STREAM_REFRESH_DEBOUNCE_MS = 1_000;
+const DEFAULT_CENTER: [number, number] = [-122.4194, 37.7749];
+const DEFAULT_ZOOM = 9.5;
 
 export const App: React.FC = () => {
-  // Core State
-  const [signals, setSignals] = useState<SignalEnvelope[]>([]);
-  const [layers, setLayers] = useState<MapLayerSpec[]>([]);
-  const [activeLayers, setActiveLayers] = useState<Set<string>>(
-    new Set([
-      'layer-earthquakes',
-      'layer-weather',
-      'layer-aircraft',
-      'layer-vessels',
-      'layer-satellites'
-    ])
-  );
-  const [sources, setSources] = useState<SourceRegistryItem[]>([]);
-  const [regions, setRegions] = useState<SavedRegion[]>([]);
-  const [currentRegion, setCurrentRegion] = useState<SavedRegion | null>(null);
-  const [events, setEvents] = useState<InvestigationEvent[]>([]);
+  const { notices, push: report, dismiss } = useNotices();
+
+  // View state: what the user is looking at
+  const [bbox, setBbox] = useState<BBox | null>(null);
+  const [hours, setHours] = useState(24);
+  const [category, setCategory] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [chosenRegion, setChosenRegion] = useState<SavedRegion | null>(null);
+  const [layerChoice, setLayerChoice] = useState<Set<string> | null>(null);
   const [selectedSignal, setSelectedSignal] = useState<SignalEnvelope | null>(null);
-  const [summary, setSummary] = useState<MapSummaryResponse | null>(null);
-  const [timeline, setTimeline] = useState<TimelineResponse | null>(null);
+  const [isEventsOpen, setIsEventsOpen] = useState(false);
+  const [isSourcesOpen, setIsSourcesOpen] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
 
-  // Filters and Navigation
-  const [selectedHours, setSelectedHours] = useState<number>(24);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [currentBbox, setCurrentBbox] = useState<[number, number, number, number] | null>(null);
+  // Server state
+  const data = useWorkspaceData({ bbox, category, status, hours }, report);
+  const sync = useSourceSync(data.refresh, report);
 
-  // Playback & UI Modals
-  const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [isEventsOpen, setIsEventsOpen] = useState<boolean>(false);
-  const [isSourcesOpen, setIsSourcesOpen] = useState<boolean>(false);
-  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
-  const [syncingSources, setSyncingSources] = useState<Set<string>>(new Set());
+  // The server's layer defaults apply until the user toggles a layer.
+  const activeLayers = useMemo(
+    () => layerChoice ?? new Set(data.layers.filter((l) => l.isEnabledDefault).map((l) => l.id)),
+    [layerChoice, data.layers]
+  );
+  const currentRegion = chosenRegion ?? data.regions[0] ?? null;
+  const visibleSignals = useMemo(() => filterSignals(data.signals, searchQuery), [data.signals, searchQuery]);
 
-  // Load Initial Metadata
-  useEffect(() => {
-    Promise.all([
-      fetchLayers(),
-      fetchSources(),
-      fetchRegions(),
-      fetchInvestigationEvents(),
-      fetchMapSummary()
-    ])
-      .then(([layersData, sourcesData, regionsData, eventsData, summaryData]) => {
-        setLayers(layersData);
-        setSources(sourcesData);
-        setRegions(regionsData);
-        if (regionsData.length > 0) {
-          setCurrentRegion(regionsData[0]); // SF Bay default
-        }
-        setEvents(eventsData);
-        setSummary(summaryData);
-      })
-      .catch((err) => console.error('Failed to load initial metadata:', err));
-  }, []);
-
-  // Panning fires many viewport changes; only query once the map settles.
-  const debouncedBbox = useDebouncedValue(currentBbox, VIEWPORT_DEBOUNCE_MS);
-  const inFlight = useRef<AbortController | null>(null);
-
-  // Load Signals & Timeline based on current filters
-  const loadSignals = useCallback(async () => {
-    // Cancel the previous load so a slow, stale response can't overwrite a newer one.
-    inFlight.current?.abort();
-    const controller = new AbortController();
-    inFlight.current = controller;
-    try {
-      const [res, tl, sum] = await Promise.all([
-        fetchSignals(
-          {
-            bbox: debouncedBbox ? debouncedBbox.join(',') : undefined,
-            category: selectedCategory || undefined,
-            data_status: selectedStatus || undefined,
-            limit: 500
-          },
-          controller.signal
-        ),
-        fetchTimeline(
-          {
-            hours: selectedHours,
-            interval_hours: selectedHours > 24 ? 6 : 1,
-            category: selectedCategory || undefined
-          },
-          controller.signal
-        ),
-        fetchMapSummary(controller.signal)
-      ]);
-      setSignals(res.items);
-      setTimeline(tl);
-      setSummary(sum);
-    } catch (err) {
-      if (!isAbortError(err)) console.error('Error fetching signals:', err);
-    }
-  }, [debouncedBbox, selectedCategory, selectedStatus, selectedHours]);
-
-  useEffect(() => {
-    loadSignals();
-  }, [loadSignals]);
-
-  useEffect(() => () => inFlight.current?.abort(), []);
-
-  // Live updates: the worker announces ingested changes; coalesce bursts into one refresh.
-  const streamRefreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const streamStatus = useEventStream(() => {
-    if (streamRefreshTimer.current) clearTimeout(streamRefreshTimer.current);
-    streamRefreshTimer.current = setTimeout(() => {
-      loadSignals();
-      fetchSources().then(setSources).catch(() => undefined);
-    }, STREAM_REFRESH_DEBOUNCE_MS);
-  });
-
-  useEffect(() => () => {
-    if (streamRefreshTimer.current) clearTimeout(streamRefreshTimer.current);
-  }, []);
-
-  // Fallback polling, only while the stream is down.
-  useEffect(() => {
-    if (streamStatus === 'live') return;
-    const timer = setInterval(loadSignals, FALLBACK_POLL_MS);
-    return () => clearInterval(timer);
-  }, [loadSignals, streamStatus]);
-
-  // Toggle Layer Visibility
-  const handleToggleLayer = (layerId: string) => {
-    setActiveLayers((prev) => {
-      const next = new Set(prev);
-      if (next.has(layerId)) {
-        next.delete(layerId);
-      } else {
-        next.add(layerId);
-      }
-      return next;
-    });
+  const toggleLayer = (layerId: string) => {
+    const next = new Set(activeLayers);
+    if (next.has(layerId)) next.delete(layerId);
+    else next.add(layerId);
+    setLayerChoice(next);
   };
 
-  // Sync a single source
-  const handleSyncSource = async (sourceId: string) => {
-    setSyncingSources((prev) => new Set(prev).add(sourceId));
-    try {
-      await triggerSourceSync(sourceId);
-      // Reload signals and sources
-      await loadSignals();
-      const updatedSources = await fetchSources();
-      setSources(updatedSources);
-    } catch (err) {
-      console.error(`Failed to sync source ${sourceId}:`, err);
-    } finally {
-      setSyncingSources((prev) => {
-        const next = new Set(prev);
-        next.delete(sourceId);
-        return next;
-      });
-    }
+  const selectRegion = (region: SavedRegion) => {
+    setChosenRegion(region);
+    setBbox([region.bboxWest, region.bboxSouth, region.bboxEast, region.bboxNorth]);
   };
-
-  // Global Sync All
-  const handleRefreshAll = async () => {
-    setIsRefreshing(true);
-    try {
-      // One provider failing (or still in its cooldown) must not block the rest.
-      const results = await Promise.allSettled(
-        sources.filter((src) => src.status !== 'disabled').map((src) => triggerSourceSync(src.id))
-      );
-      const failed = results.filter((r) => r.status === 'rejected').length;
-      if (failed) console.warn(`${failed} source sync(s) did not run`);
-      await loadSignals();
-      const updatedSources = await fetchSources();
-      setSources(updatedSources);
-    } catch (err) {
-      console.error('Failed to sync all sources:', err);
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
-
-  // Select Strategic Region
-  const handleSelectRegion = (region: SavedRegion) => {
-    setCurrentRegion(region);
-    setCurrentBbox([
-      region.bboxWest,
-      region.bboxSouth,
-      region.bboxEast,
-      region.bboxNorth
-    ]);
-  };
-
-  // Timeline Playback Simulation
-  useEffect(() => {
-    if (!isPlaying) return;
-    const interval = setInterval(() => {
-      // Step timeline
-    }, 2000);
-    return () => clearInterval(interval);
-  }, [isPlaying]);
-
-  // Filter signals by search query
-  const filteredSignals = useMemo(() => {
-    if (!searchQuery.trim()) return signals;
-    const q = searchQuery.toLowerCase();
-    return signals.filter((sig) => {
-      const matchId = sig.id.toLowerCase().includes(q);
-      const matchCat = sig.category.toLowerCase().includes(q);
-      const matchSource = sig.sourceId.toLowerCase().includes(q);
-      const metaStr = JSON.stringify(sig.metadata).toLowerCase();
-      return matchId || matchCat || matchSource || metaStr.includes(q);
-    });
-  }, [signals, searchQuery]);
 
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-background">
-      {/* Top Navigation */}
       <Navbar
-        summary={summary}
-        regions={regions}
+        summary={data.summary}
+        regions={data.regions}
         currentRegion={currentRegion}
-        onSelectRegion={handleSelectRegion}
+        onSelectRegion={selectRegion}
         onOpenEvents={() => setIsEventsOpen(true)}
         onOpenSources={() => setIsSourcesOpen(true)}
-        onRefreshAll={handleRefreshAll}
-        isRefreshing={isRefreshing}
-        eventCount={events.length}
-        streamStatus={streamStatus}
+        onRefreshAll={() => sync.syncAll(data.sources)}
+        isRefreshing={sync.isSyncingAll}
+        eventCount={data.events.length}
+        streamStatus={data.streamStatus}
       />
 
-      {/* Main Geospatial Intelligence Map Workspace */}
       <div className="relative flex-1 w-full h-[calc(100vh-56px)] overflow-hidden">
-        {/* Map Canvas */}
+        <NoticeStack notices={notices} onDismiss={dismiss} />
+
         <MapContainer
-          signals={filteredSignals}
+          signals={visibleSignals}
           activeLayers={activeLayers}
-          layers={layers}
+          layers={data.layers}
           onSelectSignal={setSelectedSignal}
           selectedSignal={selectedSignal}
-          onViewportChange={(bbox) => setCurrentBbox(bbox)}
-          center={currentRegion ? [currentRegion.centerLongitude, currentRegion.centerLatitude] : [-122.4194, 37.7749]}
-          zoom={currentRegion ? currentRegion.zoomLevel : 9.5}
+          onViewportChange={setBbox}
+          center={currentRegion ? [currentRegion.centerLongitude, currentRegion.centerLatitude] : DEFAULT_CENTER}
+          zoom={currentRegion ? currentRegion.zoomLevel : DEFAULT_ZOOM}
         />
 
-        {/* Floating Layer Control Panel */}
         <LayerControl
-          layers={layers}
+          layers={data.layers}
           activeLayers={activeLayers}
-          onToggleLayer={handleToggleLayer}
-          onSyncSource={handleSyncSource}
-          syncingSources={syncingSources}
+          onToggleLayer={toggleLayer}
+          onSyncSource={sync.syncOne}
+          syncingSources={sync.syncing}
         />
 
-        {/* Floating Signal Detail Panel */}
         <SignalDetailPanel
           signal={selectedSignal}
           onClose={() => setSelectedSignal(null)}
           onSelectSignal={setSelectedSignal}
         />
 
-        {/* Bottom Timeline & Filters Panel */}
         <TimelinePanel
-          timeline={timeline}
-          selectedHours={selectedHours}
-          onSelectHours={setSelectedHours}
-          selectedCategory={selectedCategory}
-          onSelectCategory={setSelectedCategory}
-          selectedStatus={selectedStatus}
-          onSelectStatus={setSelectedStatus}
+          timeline={data.timeline}
+          selectedHours={hours}
+          onSelectHours={setHours}
+          selectedCategory={category}
+          onSelectCategory={setCategory}
+          selectedStatus={status}
+          onSelectStatus={setStatus}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           isPlaying={isPlaying}
-          onTogglePlay={() => setIsPlaying(!isPlaying)}
+          onTogglePlay={() => setIsPlaying((p) => !p)}
           onStepForward={() => {}}
           onResetPlayback={() => setIsPlaying(false)}
         />
       </div>
 
-      {/* Investigation & Cross-Source Correlation Modal */}
       <InvestigationModal
         isOpen={isEventsOpen}
         onClose={() => setIsEventsOpen(false)}
-        events={events}
+        events={data.events}
         onSelectSignal={setSelectedSignal}
       />
 
-      {/* Source Registry & Licensing Modal */}
       <SourceRegistryModal
         isOpen={isSourcesOpen}
         onClose={() => setIsSourcesOpen(false)}
-        sources={sources}
-        onSyncSource={handleSyncSource}
-        syncingSources={syncingSources}
+        sources={data.sources}
+        onSyncSource={sync.syncOne}
+        syncingSources={sync.syncing}
       />
     </div>
   );
 };
-

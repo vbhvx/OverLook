@@ -148,3 +148,18 @@ async def test_registry_merges_static_metadata_with_live_state(service):
     assert registry[SRC].activeRecordCount == 2
     assert registry[SRC].lastSuccessAt is not None
     assert registry[SRC].licenseStatus == "public_domain"
+
+
+async def test_manual_sync_has_a_per_source_cooldown(test_settings, adapter, bus):
+    from backend.app.ingestion.service import SyncCooldownError
+
+    settings = test_settings.model_copy(update={"MANUAL_SYNC_COOLDOWN_SECONDS": 60})
+    svc = IngestionService(InMemorySignalStore(), bus, settings, adapters={SRC: adapter, "open-meteo": FakeAdapter()})
+    assert (await svc.sync_now(SRC)).status == "success"
+    with pytest.raises(SyncCooldownError) as exc:
+        await svc.sync_now(SRC)
+    assert 0 < exc.value.retry_after <= 60
+    # The cooldown is per source: another source may still sync.
+    assert (await svc.sync_now("open-meteo")).status == "success"
+    with pytest.raises(UnknownSourceError):
+        await svc.sync_now("nope")

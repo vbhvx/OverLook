@@ -36,8 +36,8 @@ export interface SignalEnvelope {
   category: SignalCategory;
   signalType: string;
   geometry: GeoJSONGeometry;
-  latitude: float;
-  longitude: float;
+  latitude: number;
+  longitude: number;
   altitudeM?: number;
   observedAt: string;
   publishedAt?: string;
@@ -53,8 +53,6 @@ export interface SignalEnvelope {
   schemaVersion: string;
   lastSeenAt?: string;
 }
-
-type float = number;
 
 export interface SignalQueryResponse {
   items: SignalEnvelope[];

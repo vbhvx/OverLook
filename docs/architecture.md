@@ -37,6 +37,7 @@ A single process mode also exists for development. With `DATABASE_URL=memory://`
 | `container.py` | Composition root: builds store, bus, ingestion and correlation from settings | everything |
 | `ingestion/` | Registry (static metadata and cadence), pipeline service, scheduler, leader election | storage contract, providers, core |
 | `correlation/` | Versioned proximity rules producing relations and events | storage contract |
+| `geospatial/` | Coordinate validation and distance; the static map catalogue (`regions.py`, `layers.py`) | schemas |
 | `storage/` | `SignalStore` contract plus memory and PostGIS engines | schemas |
 | `providers/` | One adapter per upstream source: fetch and parse into `SignalEnvelope` | schemas, geospatial |
 | `core/` | Cross-cutting concerns: logging, metrics, middleware, resilience, event bus | — |
@@ -70,5 +71,13 @@ Nothing outside `container.py` constructs infrastructure, and endpoints receive 
 - **Worker:** extra replicas add availability, not throughput. If ingestion outgrows one process, the advisory lock can be keyed per source to spread sources across workers.
 - **Database:** bbox and radius queries are index-backed. `signals` size is bounded by retention. The read pattern (recent, spatial) suits time-based partitioning if volume grows by orders of magnitude.
 - **Rate limiting** is per replica. A global limit belongs at the edge or in Redis behind the same `allow()` interface.
+
+## Authentication
+
+There are no user accounts: every endpoint reads public data, and the one mutation (`POST /sources/{id}/sync`) is protected by a per-source cooldown in `IngestionService.sync_now` and the per-client rate limiter. A deployment that exposes the API beyond its operators should put it behind an authenticating proxy, or add a token check to that one route.
+
+## Frontend
+
+Structure, state ownership and error handling: [`docs/frontend.md`](frontend.md).
 
 Decision records: [`docs/adr/`](adr/README.md).
