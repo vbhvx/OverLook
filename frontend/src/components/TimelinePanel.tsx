@@ -1,18 +1,15 @@
 // frontend/src/components/TimelinePanel.tsx
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   Play,
   Pause,
   RotateCcw,
   StepForward,
   Clock,
-  Filter,
   Search,
-  Calendar,
-  Layers,
-  Sparkles
 } from 'lucide-react';
-import { TimelineResponse, TimelineBucket, SignalCategory } from '../types';
+import { TimelineResponse } from '../types';
+import { CATEGORIES, CATEGORY_IDS } from '../lib/categories';
 
 interface TimelinePanelProps {
   timeline: TimelineResponse | null;
@@ -30,15 +27,6 @@ interface TimelinePanelProps {
   onResetPlayback: () => void;
 }
 
-const CATEGORY_COLORS: Record<string, string> = {
-  earthquake: '#ef4444',
-  weather: '#06b6d4',
-  aircraft: '#3b82f6',
-  vessel: '#10b981',
-  satellite: '#a855f7',
-  camera: '#f59e0b',
-  infrastructure: '#64748b'
-};
 
 export const TimelinePanel: React.FC<TimelinePanelProps> = ({
   timeline,
@@ -108,6 +96,22 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
             ))}
           </div>
 
+          {/* Category Filter */}
+          <select
+            aria-label="Filter by category"
+            value={selectedCategory ?? ''}
+            onChange={(e) => onSelectCategory(e.target.value || null)}
+            className="bg-slate-950/80 border border-panel-border rounded-lg px-2 py-1 text-xs font-mono text-slate-300 capitalize"
+            style={selectedCategory ? { color: CATEGORIES[selectedCategory as keyof typeof CATEGORIES]?.color } : undefined}
+          >
+            <option value="">All categories</option>
+            {CATEGORY_IDS.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </select>
+
           {/* Status Filter Toggle */}
           <div className="flex items-center space-x-1 bg-slate-950/80 border border-panel-border rounded-lg p-0.5 text-xs font-mono">
             {['all', 'actual', 'simulated'].map((st) => (
@@ -157,7 +161,7 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
             return (
               <div
                 key={idx}
-                className="flex-1 min-w-[12px] flex flex-col items-center group relative cursor-pointer"
+                className="flex-1 min-w-[12px] h-full flex flex-col items-center justify-end group relative cursor-pointer"
                 title={`${bucket.bucketTime.slice(0, 16)}: ${bucket.totalCount} observations`}
               >
                 {/* Tooltip on hover */}

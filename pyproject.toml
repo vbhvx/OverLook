@@ -1,0 +1,40 @@
+[project]
+name = "overlook"
+version = "1.1.0"
+description = "Public signal intelligence & situational awareness platform"
+requires-python = ">=3.9"
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+filterwarnings = ["ignore::DeprecationWarning:websockets.*"]
+
+[tool.coverage.run]
+source = ["backend/app"]
+omit = ["backend/app/worker.py"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+
+[tool.ruff]
+target-version = "py39"
+line-length = 120
+extend-exclude = ["frontend", ".venv"]
+
+[tool.ruff.lint]
+# pyflakes, pycodestyle, isort, bugbear, pyupgrade-safe subset, async pitfalls
+select = ["F", "E", "W", "I", "B", "ASYNC", "S"]
+ignore = [
+    "E501",   # long lines are handled by the formatter's judgement, not a hard rule
+    "B008",   # FastAPI's Depends()/Query() in defaults is idiomatic
+    "S104",   # binding 0.0.0.0 is intended inside containers
+]
+
+[tool.ruff.lint.per-file-ignores]
+"backend/tests/**" = ["S101", "S105", "S106", "B017"]
+"backend/app/storage/postgis.py" = ["S608"]  # interpolated fragments are whitelisted, values are bound
+
+[tool.ruff.lint.isort]
+known-first-party = ["backend"]

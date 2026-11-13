@@ -3,12 +3,7 @@ import React, { useState } from 'react';
 import {
   X,
   Network,
-  ShieldAlert,
   ArrowRight,
-  ExternalLink,
-  MapPin,
-  Clock,
-  CheckCircle2,
   AlertTriangle
 } from 'lucide-react';
 import { InvestigationEvent, SignalEnvelope } from '../types';

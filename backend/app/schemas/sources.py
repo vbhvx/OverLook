@@ -1,7 +1,9 @@
 # backend/app/schemas/sources.py
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel, Field
+
 
 class SourceRegistryItem(BaseModel):
     id: str
@@ -32,7 +34,7 @@ class SourceSyncResult(BaseModel):
     recordsRejected: int
     durationMs: int
     errorMessage: Optional[str] = None
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class MapLayerSpec(BaseModel):
     id: str

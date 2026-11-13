@@ -10,8 +10,8 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+/lib/
+/lib64/
 parts/
 sdist/
 var/
@@ -51,5 +51,7 @@ Thumbs.db
 # Test & coverage
 .pytest_cache/
 .coverage
+coverage.xml
 htmlcov/
+frontend/coverage/
 

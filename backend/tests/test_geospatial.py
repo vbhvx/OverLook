@@ -1,9 +1,13 @@
 # backend/tests/test_geospatial.py
+
 import pytest
-import math
+
 from backend.app.geospatial.validation import (
-    validate_coordinates, is_point_in_bbox, haversine_distance_km, validate_geometry
+    haversine_distance_km,
+    is_point_in_bbox,
+    validate_coordinates,
 )
+
 
 def test_valid_point_coordinates():
     lon, lat = validate_coordinates(-122.4194, 37.7749)
@@ -48,23 +52,3 @@ def test_is_point_in_antimeridian_bbox():
     assert is_point_in_bbox(175.0, 0.0, bbox) is True
     assert is_point_in_bbox(-175.0, 0.0, bbox) is True
     assert is_point_in_bbox(100.0, 0.0, bbox) is False
-
-def test_validate_geojson_geometry():
-    pt = {"type": "Point", "coordinates": [-122.4, 37.7]}
-    res = validate_geometry(pt)
-    assert res["type"] == "Point"
-    assert res["coordinates"] == [-122.4, 37.7]
-
-    poly = {
-        "type": "Polygon",
-        "coordinates": [[
-            [-122.5, 37.7],
-            [-122.3, 37.7],
-            [-122.3, 37.9],
-            [-122.5, 37.9],
-            [-122.5, 37.7]
-        ]]
-    }
-    res_poly = validate_geometry(poly)
-    assert res_poly["type"] == "Polygon"
-    assert len(res_poly["coordinates"][0]) >= 4

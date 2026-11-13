@@ -5,18 +5,12 @@ import {
   ExternalLink,
   ShieldAlert,
   Clock,
-  Compass,
   MapPin,
-  Activity,
-  Layers,
-  Hash,
-  Info,
   CheckCircle2,
-  AlertTriangle,
   ArrowRight
 } from 'lucide-react';
 import { SignalEnvelope, SignalRelation } from '../types';
-import { fetchSignalDetail } from '../api/client';
+import { fetchSignalDetail, isAbortError } from '../api/client';
 import { formatDistanceToNow } from 'date-fns';
 
 interface SignalDetailPanelProps {
@@ -44,24 +38,22 @@ export const SignalDetailPanel: React.FC<SignalDetailPanelProps> = ({
       return;
     }
 
-    let isMounted = true;
+    // Abort on re-selection so rapid clicks don't race each other.
+    const controller = new AbortController();
     setLoading(true);
 
-    fetchSignalDetail(signal.id)
+    fetchSignalDetail(signal.id, controller.signal)
       .then((data) => {
-        if (isMounted) {
-          setDetailData(data);
-          setLoading(false);
-        }
+        setDetailData(data);
+        setLoading(false);
       })
       .catch((err) => {
+        if (isAbortError(err)) return;
         console.error('Error loading signal detail:', err);
-        if (isMounted) setLoading(false);
+        setLoading(false);
       });
 
-    return () => {
-      isMounted = false;
-    };
+    return () => controller.abort();
   }, [signal?.id]);
 
   if (!signal) return null;
@@ -255,7 +247,9 @@ export const SignalDetailPanel: React.FC<SignalDetailPanelProps> = ({
             Deterministic spatial-temporal co-occurrence. Proximity is not causation.
           </p>
 
-          {detailData?.correlatedSignals && detailData.correlatedSignals.length > 0 ? (
+          {loading ? (
+            <div className="text-[11px] text-slate-400 italic p-2 text-center">Loading nearby signals…</div>
+          ) : detailData?.correlatedSignals && detailData.correlatedSignals.length > 0 ? (
             <div className="space-y-1.5">
               {detailData.correlatedSignals.map((nb) => {
                 const relation = detailData.correlatedRelations.find(

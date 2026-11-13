@@ -11,98 +11,119 @@ import {
   MapSummaryResponse
 } from '../types';
 
-const BASE_URL = '/api/v1';
+export const BASE_URL = '/api/v1';
 
-export async function fetchSignals(params?: {
-  bbox?: string;
-  category?: string;
-  source?: string;
-  data_status?: string;
-  start?: string;
-  end?: string;
-  limit?: number;
-  offset?: number;
-}): Promise<SignalQueryResponse> {
-  const query = new URLSearchParams();
-  if (params?.bbox) query.set('bbox', params.bbox);
-  if (params?.category) query.set('category', params.category);
-  if (params?.source) query.set('source', params.source);
-  if (params?.data_status) query.set('data_status', params.data_status);
-  if (params?.start) query.set('start', params.start);
-  if (params?.end) query.set('end', params.end);
-  if (params?.limit) query.set('limit', params.limit.toString());
-  if (params?.offset) query.set('offset', params.offset.toString());
-
-  const res = await fetch(`${BASE_URL}/signals?${query.toString()}`);
-  if (!res.ok) {
-    throw new Error(`Failed to fetch signals: ${res.statusText}`);
+/** Mirrors the backend error envelope: {error, message, requestId, details?}. */
+export class ApiError extends Error {
+  constructor(
+    readonly status: number,
+    readonly code: string,
+    message: string,
+    readonly requestId: string | null,
+    readonly retryAfterSeconds: number | null = null
+  ) {
+    super(message);
+    this.name = 'ApiError';
   }
-  return res.json();
 }
 
-export async function fetchSignalDetail(signalId: string): Promise<{
+type QueryValue = string | number | undefined | null;
+
+export function buildQuery(params: Record<string, QueryValue> = {}): string {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null && value !== '') {
+      query.set(key, String(value));
+    }
+  }
+  const s = query.toString();
+  return s ? `?${s}` : '';
+}
+
+export async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const res = await fetch(`${BASE_URL}${path}`, init);
+  if (res.ok) {
+    return res.json() as Promise<T>;
+  }
+
+  let code = 'error';
+  let message = res.statusText || `HTTP ${res.status}`;
+  try {
+    const body = await res.json();
+    code = body.error ?? code;
+    message = body.message ?? message;
+  } catch {
+    // Non-JSON error (e.g. proxy page): keep the status text.
+  }
+  const retryAfter = res.headers.get('retry-after');
+  throw new ApiError(
+    res.status,
+    code,
+    message,
+    res.headers.get('x-request-id'),
+    retryAfter ? Number(retryAfter) : null
+  );
+}
+
+export function isAbortError(err: unknown): boolean {
+  return err instanceof DOMException && err.name === 'AbortError';
+}
+
+export function fetchSignals(
+  params: {
+    bbox?: string;
+    category?: string;
+    source?: string;
+    data_status?: string;
+    start?: string;
+    end?: string;
+    limit?: number;
+    offset?: number;
+  } = {},
+  signal?: AbortSignal
+): Promise<SignalQueryResponse> {
+  return request(`/signals${buildQuery(params)}`, { signal });
+}
+
+export function fetchSignalDetail(
+  signalId: string,
+  signal?: AbortSignal
+): Promise<{
   signal: SignalEnvelope;
   correlatedRelations: any[];
   correlatedSignals: SignalEnvelope[];
   provenance: Record<string, any>;
 }> {
-  const res = await fetch(`${BASE_URL}/signals/${encodeURIComponent(signalId)}`);
-  if (!res.ok) {
-    throw new Error(`Failed to fetch signal detail: ${res.statusText}`);
-  }
-  return res.json();
+  return request(`/signals/${encodeURIComponent(signalId)}`, { signal });
 }
 
-export async function fetchSources(): Promise<SourceRegistryItem[]> {
-  const res = await fetch(`${BASE_URL}/sources`);
-  if (!res.ok) throw new Error('Failed to fetch sources');
-  return res.json();
+export function fetchSources(): Promise<SourceRegistryItem[]> {
+  return request('/sources');
 }
 
-export async function triggerSourceSync(sourceId: string): Promise<SourceSyncResult> {
-  const res = await fetch(`${BASE_URL}/sources/${encodeURIComponent(sourceId)}/sync`, {
-    method: 'POST'
-  });
-  if (!res.ok) throw new Error(`Sync failed: ${res.statusText}`);
-  return res.json();
+export function triggerSourceSync(sourceId: string): Promise<SourceSyncResult> {
+  return request(`/sources/${encodeURIComponent(sourceId)}/sync`, { method: 'POST' });
 }
 
-export async function fetchLayers(): Promise<MapLayerSpec[]> {
-  const res = await fetch(`${BASE_URL}/layers`);
-  if (!res.ok) throw new Error('Failed to fetch map layers');
-  return res.json();
+export function fetchLayers(): Promise<MapLayerSpec[]> {
+  return request('/layers');
 }
 
-export async function fetchRegions(): Promise<SavedRegion[]> {
-  const res = await fetch(`${BASE_URL}/regions`);
-  if (!res.ok) throw new Error('Failed to fetch regions');
-  return res.json();
+export function fetchRegions(): Promise<SavedRegion[]> {
+  return request('/regions');
 }
 
-export async function fetchInvestigationEvents(): Promise<InvestigationEvent[]> {
-  const res = await fetch(`${BASE_URL}/events`);
-  if (!res.ok) throw new Error('Failed to fetch investigation events');
-  return res.json();
+export function fetchInvestigationEvents(): Promise<InvestigationEvent[]> {
+  return request('/events');
 }
 
-export async function fetchTimeline(params?: {
-  hours?: number;
-  interval_hours?: number;
-  category?: string;
-}): Promise<TimelineResponse> {
-  const query = new URLSearchParams();
-  if (params?.hours) query.set('hours', params.hours.toString());
-  if (params?.interval_hours) query.set('interval_hours', params.interval_hours.toString());
-  if (params?.category) query.set('category', params.category);
-
-  const res = await fetch(`${BASE_URL}/timeline?${query.toString()}`);
-  if (!res.ok) throw new Error('Failed to fetch timeline');
-  return res.json();
+export function fetchTimeline(
+  params: { hours?: number; interval_hours?: number; category?: string } = {},
+  signal?: AbortSignal
+): Promise<TimelineResponse> {
+  return request(`/timeline${buildQuery(params)}`, { signal });
 }
 
-export async function fetchMapSummary(): Promise<MapSummaryResponse> {
-  const res = await fetch(`${BASE_URL}/map/summary`);
-  if (!res.ok) throw new Error('Failed to fetch map summary');
-  return res.json();
+export function fetchMapSummary(signal?: AbortSignal): Promise<MapSummaryResponse> {
+  return request('/map/summary', { signal });
 }
-

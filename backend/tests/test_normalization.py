@@ -1,10 +1,11 @@
 # backend/tests/test_normalization.py
 from datetime import datetime, timezone
+
 import pytest
-from backend.app.schemas.signals import (
-    SignalEnvelope, SignalCategory, DataStatus, GeoJSONGeometry, GeometryType
-)
+
 from backend.app.ingestion.fixtures import get_simulated_fixtures
+from backend.app.schemas.signals import DataStatus, GeoJSONGeometry, GeometryType, SignalCategory, SignalEnvelope
+
 
 def test_signal_envelope_structure():
     now = datetime.now(timezone.utc)

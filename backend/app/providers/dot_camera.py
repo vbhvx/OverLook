@@ -1,12 +1,17 @@
 # backend/app/providers/dot_camera.py
-from datetime import datetime, timezone, timedelta
-from typing import Any, Dict, List, Optional
+from datetime import datetime, timedelta, timezone
+from typing import List, Optional
+
+from backend.app.geospatial.validation import is_point_in_bbox, validate_coordinates
 from backend.app.providers.base import BaseProviderAdapter, compute_record_hash
 from backend.app.schemas.signals import (
-    SignalEnvelope, SignalCategory, DataStatus, GeoJSONGeometry,
-    GeometryType, SourceAttributionRef
+    DataStatus,
+    GeoJSONGeometry,
+    GeometryType,
+    SignalCategory,
+    SignalEnvelope,
+    SourceAttributionRef,
 )
-from backend.app.geospatial.validation import validate_coordinates, is_point_in_bbox
 
 # Verified Public Department of Transportation (DOT) Traffic Feeds
 PUBLIC_CAMERAS = [
@@ -109,8 +114,8 @@ class DOTCameraAdapter(BaseProviderAdapter):
                 observedAt=last_verified,
                 publishedAt=last_verified,
                 ingestedAt=now_utc,
-                dataStatus=DataStatus.ACTUAL,
-                isSimulated=False,
+                dataStatus=DataStatus.SIMULATED,  # curated sample, not fetched from the provider
+                isSimulated=True,
                 sourceUrl=cam["web_page"],
                 source=SourceAttributionRef(
                     id=self.source_id,
@@ -138,15 +143,5 @@ class DOTCameraAdapter(BaseProviderAdapter):
             signals.append(signal)
 
         self.last_sync_at = now_utc
-        self.last_status = "active"
+        self.last_status = "simulated"
         return signals
-
-    async def check_health(self) -> Dict[str, Any]:
-        return {
-            "sourceId": self.source_id,
-            "status": "healthy",
-            "registeredCameras": len(PUBLIC_CAMERAS),
-            "lastSyncAt": self.last_sync_at,
-            "isLive": True
-        }
-
