@@ -47,6 +47,14 @@ class UnknownSourceError(KeyError):
     pass
 
 
+class SyncCooldownError(Exception):
+    """A manual sync was requested before the source's cooldown elapsed."""
+
+    def __init__(self, source_id: str, retry_after: float):
+        super().__init__(f"Source '{source_id}' was synced recently; retry in {retry_after:.0f}s")
+        self.retry_after = retry_after
+
+
 def validate_signal(sig: SignalEnvelope, now: datetime) -> Optional[str]:
     """Returns a rejection reason, or None if the record may be ingested."""
     for name in ("observedAt", "ingestedAt"):
@@ -79,6 +87,8 @@ class IngestionService:
             sid: CircuitBreaker(settings.CIRCUIT_FAILURE_THRESHOLD, settings.CIRCUIT_RESET_SECONDS)
             for sid in self.adapters
         }
+        # Manual syncs spend a provider's rate budget, so each source has a cooldown.
+        self._last_manual: Dict[str, float] = {}
         # One sync per source at a time within this process (scheduler vs manual trigger).
         # Created lazily so they bind to the running loop (matters on Python <3.10).
         self._locks: Dict[str, asyncio.Lock] = {}
@@ -90,6 +100,18 @@ class IngestionService:
     async def seed_fixtures(self) -> None:
         stats = await self.store.upsert_signals(get_simulated_fixtures(), datetime.now(timezone.utc))
         logger.info("fixtures seeded", extra={"inserted": stats.inserted, "unchanged": stats.unchanged})
+
+    async def sync_now(self, source_id: str) -> SourceSyncResult:
+        """A user-requested sync: same pipeline as the scheduler's, behind a per-source cooldown."""
+        if source_id not in self.adapters:
+            raise UnknownSourceError(source_id)
+        now = time.monotonic()
+        elapsed = now - self._last_manual.get(source_id, float("-inf"))
+        cooldown = self.settings.MANUAL_SYNC_COOLDOWN_SECONDS
+        if elapsed < cooldown:
+            raise SyncCooldownError(source_id, cooldown - elapsed)
+        self._last_manual[source_id] = now
+        return await self.sync_source(source_id)
 
     async def sync_all(self, bbox: Optional[List[float]] = None) -> List[SourceSyncResult]:
         return list(await asyncio.gather(*(self.sync_source(sid, bbox) for sid in self.adapters)))

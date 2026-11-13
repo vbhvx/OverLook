@@ -1,20 +1,15 @@
 # backend/app/api/v1/sources.py
 import math
-import time
-from typing import Dict, List
+from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from backend.app.api.deps import get_ingestion, get_settings, get_store
-from backend.app.config import Settings
-from backend.app.ingestion.service import IngestionService
+from backend.app.api.deps import get_ingestion, get_store
+from backend.app.ingestion.service import IngestionService, SyncCooldownError, UnknownSourceError
 from backend.app.schemas.sources import SourceRegistryItem, SourceSyncResult
 from backend.app.storage.base import SignalStore
 
 router = APIRouter(prefix="/sources", tags=["Sources"])
-
-# Manual sync spends a provider's rate budget, so it is throttled per source.
-_last_manual_sync: Dict[str, float] = {}
 
 
 @router.get("", response_model=List[SourceRegistryItem])
@@ -32,26 +27,15 @@ async def get_source(source_id: str, ingestion: IngestionService = Depends(get_i
 
 
 @router.post("/{source_id}/sync", response_model=SourceSyncResult)
-async def trigger_source_sync(
-    source_id: str,
-    ingestion: IngestionService = Depends(get_ingestion),
-    settings: Settings = Depends(get_settings),
-):
+async def trigger_source_sync(source_id: str, ingestion: IngestionService = Depends(get_ingestion)):
     """Runs one ingestion cycle for a source now. Limited to one call per source per cooldown."""
-    if source_id not in ingestion.adapters:
-        raise HTTPException(status_code=404, detail=f"Source '{source_id}' has no configured adapter")
-
-    now = time.monotonic()
-    elapsed = now - _last_manual_sync.get(source_id, -math.inf)
-    if elapsed < settings.MANUAL_SYNC_COOLDOWN_SECONDS:
-        retry = math.ceil(settings.MANUAL_SYNC_COOLDOWN_SECONDS - elapsed)
-        raise HTTPException(
-            status_code=429,
-            detail=f"Source '{source_id}' was synced recently; retry in {retry}s",
-            headers={"Retry-After": str(retry)},
-        )
-    _last_manual_sync[source_id] = now
-    return await ingestion.sync_source(source_id)
+    try:
+        return await ingestion.sync_now(source_id)
+    except UnknownSourceError:
+        raise HTTPException(status_code=404, detail=f"Source '{source_id}' has no configured adapter") from None
+    except SyncCooldownError as exc:
+        retry = max(1, math.ceil(exc.retry_after))
+        raise HTTPException(status_code=429, detail=str(exc), headers={"Retry-After": str(retry)}) from None
 
 
 @router.get("/{source_id}/runs", response_model=List[SourceSyncResult])

@@ -4,7 +4,7 @@ import hashlib
 import json
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 import httpx
 
@@ -29,20 +29,12 @@ class BaseProviderAdapter(abc.ABC):
         self.last_sync_at: Optional[datetime] = None
         self.last_status: str = "active"
         self.last_error: Optional[str] = None
-        self.rate_limited_until: Optional[datetime] = None
 
     @abc.abstractmethod
     async def fetch_signals(self, bbox: Optional[List[float]] = None) -> List[SignalEnvelope]:
         """
         Fetches signals from the provider or authorized cache.
         Optionally bounded by bbox [west, south, east, north].
-        """
-        pass
-
-    @abc.abstractmethod
-    async def check_health(self) -> Dict[str, Any]:
-        """
-        Checks connectivity, rate-limit status, and schema health.
         """
         pass
 
@@ -53,4 +45,3 @@ class BaseProviderAdapter(abc.ABC):
                 "User-Agent": "OverLook-Situational-Awareness/1.0 (+https://github.com/overlook-intel)"
             }
         )
-

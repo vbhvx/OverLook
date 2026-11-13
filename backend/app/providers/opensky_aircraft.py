@@ -151,14 +151,3 @@ class OpenSkyAircraftAdapter(BaseProviderAdapter):
             return self._cached_signals
 
         return signals
-
-    async def check_health(self) -> Dict[str, Any]:
-        return {
-            "sourceId": self.source_id,
-            "status": self.last_status,
-            "cachedCount": len(self._cached_signals),
-            "lastSyncAt": self.last_sync_at,
-            "lastError": self.last_error,
-            "isLive": True
-        }
-

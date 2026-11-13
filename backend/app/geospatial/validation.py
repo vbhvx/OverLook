@@ -1,6 +1,6 @@
 # backend/app/geospatial/validation.py
 import math
-from typing import Any, Dict, List, Tuple
+from typing import List, Tuple
 
 
 def haversine_distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -67,46 +67,3 @@ def is_point_in_bbox(lon: float, lat: float, bbox: List[float]) -> bool:
     else:
         # Crosses antimeridian: e.g. west=170, east=-170
         return lon >= west or lon <= east
-
-def validate_geometry(geom: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Validates GeoJSON geometry dictionary and normalizes coordinates.
-    """
-    if not isinstance(geom, dict):
-        raise ValueError("Geometry must be a dictionary")
-
-    geom_type = geom.get("type")
-    if geom_type not in ("Point", "Polygon", "LineString", "MultiPoint"):
-        raise ValueError(f"Unsupported geometry type: {geom_type}")
-
-    coords = geom.get("coordinates")
-    if coords is None:
-        raise ValueError("Geometry missing 'coordinates'")
-
-    if geom_type == "Point":
-        if not isinstance(coords, (list, tuple)) or len(coords) < 2:
-            raise ValueError(f"Invalid Point coordinates: {coords}")
-        lon, lat = validate_coordinates(coords[0], coords[1])
-        alt = coords[2] if len(coords) > 2 else None
-        res_coords = [lon, lat] if alt is None else [lon, lat, alt]
-        return {"type": "Point", "coordinates": res_coords}
-
-    elif geom_type == "Polygon":
-        if not isinstance(coords, (list, tuple)) or len(coords) == 0:
-            raise ValueError("Polygon must have at least one linear ring")
-        validated_rings = []
-        for ring in coords:
-            if not isinstance(ring, (list, tuple)) or len(ring) < 4:
-                raise ValueError("Polygon linear ring must have at least 4 positions")
-            v_ring = []
-            for pt in ring:
-                lon, lat = validate_coordinates(pt[0], pt[1])
-                v_ring.append([lon, lat])
-            # Check closure
-            if v_ring[0] != v_ring[-1]:
-                v_ring.append(v_ring[0]) # Auto-close if needed
-            validated_rings.append(v_ring)
-        return {"type": "Polygon", "coordinates": validated_rings}
-
-    return geom
-

@@ -1,6 +1,6 @@
 # backend/app/providers/usgs_earthquake.py
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from backend.app.geospatial.validation import validate_coordinates
 from backend.app.providers.base import BaseProviderAdapter, compute_record_hash, logger
@@ -131,23 +131,3 @@ class USGSEarthquakeAdapter(BaseProviderAdapter):
             self.last_error = str(e)
 
         return signals
-
-    async def check_health(self) -> Dict[str, Any]:
-        try:
-            async with self.get_http_client() as client:
-                resp = await client.get(self.API_URL, params={"format": "geojson", "limit": 1})
-                return {
-                    "sourceId": self.source_id,
-                    "status": "healthy" if resp.status_code == 200 else "degraded",
-                    "statusCode": resp.status_code,
-                    "lastSyncAt": self.last_sync_at,
-                    "isLive": True
-                }
-        except Exception as e:
-            return {
-                "sourceId": self.source_id,
-                "status": "offline",
-                "error": str(e),
-                "isLive": True
-            }
-

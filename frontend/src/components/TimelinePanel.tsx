@@ -9,6 +9,7 @@ import {
   Search,
 } from 'lucide-react';
 import { TimelineResponse } from '../types';
+import { CATEGORIES, CATEGORY_IDS } from '../lib/categories';
 
 interface TimelinePanelProps {
   timeline: TimelineResponse | null;
@@ -26,15 +27,6 @@ interface TimelinePanelProps {
   onResetPlayback: () => void;
 }
 
-const CATEGORY_COLORS: Record<string, string> = {
-  earthquake: '#ef4444',
-  weather: '#06b6d4',
-  aircraft: '#3b82f6',
-  vessel: '#10b981',
-  satellite: '#a855f7',
-  camera: '#f59e0b',
-  infrastructure: '#64748b'
-};
 
 export const TimelinePanel: React.FC<TimelinePanelProps> = ({
   timeline,
@@ -110,10 +102,10 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
             value={selectedCategory ?? ''}
             onChange={(e) => onSelectCategory(e.target.value || null)}
             className="bg-slate-950/80 border border-panel-border rounded-lg px-2 py-1 text-xs font-mono text-slate-300 capitalize"
-            style={selectedCategory ? { color: CATEGORY_COLORS[selectedCategory] } : undefined}
+            style={selectedCategory ? { color: CATEGORIES[selectedCategory as keyof typeof CATEGORIES]?.color } : undefined}
           >
             <option value="">All categories</option>
-            {Object.keys(CATEGORY_COLORS).map((cat) => (
+            {CATEGORY_IDS.map((cat) => (
               <option key={cat} value={cat}>
                 {cat}
               </option>
@@ -169,7 +161,7 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
             return (
               <div
                 key={idx}
-                className="flex-1 min-w-[12px] flex flex-col items-center group relative cursor-pointer"
+                className="flex-1 min-w-[12px] h-full flex flex-col items-center justify-end group relative cursor-pointer"
                 title={`${bucket.bucketTime.slice(0, 16)}: ${bucket.totalCount} observations`}
               >
                 {/* Tooltip on hover */}
