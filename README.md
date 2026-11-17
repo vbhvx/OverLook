@@ -115,6 +115,7 @@ backend/app/
   worker.py       standalone ingestion process
 backend/migrations/   Alembic (hand-written SQL: PostGIS types, partial & GiST indexes)
 frontend/src/     React + MapLibre UI: api/ client, hooks/ state, lib/ pure logic, components/ views
+frontend/public/about/  static showcase page served at /about/
 deploy/           Prometheus scrape config + alert rules, Grafana dashboard
 docs/             architecture, frontend, API, data model, sources, deployment, ADRs
 ```

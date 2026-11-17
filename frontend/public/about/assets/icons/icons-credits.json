@@ -1,0 +1,114 @@
+[
+  {
+    "file": "postgresql.svg",
+    "icon": "si:postgresql",
+    "name": "PostgreSQL",
+    "kind": "mono",
+    "source": "simple-icons@16.30.0",
+    "author": "Simple Icons Collaborators",
+    "licence": "CC0-1.0",
+    "url": "https://github.com/simple-icons/simple-icons",
+    "trademark": true,
+    "colour": "one-colour fallback in the brand hex"
+  },
+  {
+    "file": "prometheus.svg",
+    "icon": "si:prometheus",
+    "name": "Prometheus",
+    "kind": "mono",
+    "source": "simple-icons@16.30.0",
+    "author": "Simple Icons Collaborators",
+    "licence": "CC0-1.0",
+    "url": "https://github.com/simple-icons/simple-icons",
+    "trademark": true,
+    "colour": "one-colour fallback in the brand hex"
+  },
+  {
+    "file": "ui-activity.svg",
+    "icon": "ui:activity",
+    "name": "Activity",
+    "kind": "line",
+    "source": "@iconify-json/lucide@1.2.100",
+    "author": "Lucide Contributors",
+    "licence": "ISC",
+    "url": "https://github.com/lucide-icons/lucide",
+    "trademark": false
+  },
+  {
+    "file": "ui-chart-column.svg",
+    "icon": "ui:chart-column",
+    "name": "Chart Column",
+    "kind": "line",
+    "source": "@iconify-json/lucide@1.2.100",
+    "author": "Lucide Contributors",
+    "licence": "ISC",
+    "url": "https://github.com/lucide-icons/lucide",
+    "trademark": false
+  },
+  {
+    "file": "ui-cloud-sun.svg",
+    "icon": "ui:cloud-sun",
+    "name": "Cloud Sun",
+    "kind": "line",
+    "source": "@iconify-json/lucide@1.2.100",
+    "author": "Lucide Contributors",
+    "licence": "ISC",
+    "url": "https://github.com/lucide-icons/lucide",
+    "trademark": false
+  },
+  {
+    "file": "ui-cpu.svg",
+    "icon": "ui:cpu",
+    "name": "Cpu",
+    "kind": "line",
+    "source": "@iconify-json/lucide@1.2.100",
+    "author": "Lucide Contributors",
+    "licence": "ISC",
+    "url": "https://github.com/lucide-icons/lucide",
+    "trademark": false
+  },
+  {
+    "file": "ui-git-compare.svg",
+    "icon": "ui:git-compare",
+    "name": "Git Compare",
+    "kind": "line",
+    "source": "@iconify-json/lucide@1.2.100",
+    "author": "Lucide Contributors",
+    "licence": "ISC",
+    "url": "https://github.com/lucide-icons/lucide",
+    "trademark": false
+  },
+  {
+    "file": "ui-map.svg",
+    "icon": "ui:map",
+    "name": "Map",
+    "kind": "line",
+    "source": "@iconify-json/lucide@1.2.100",
+    "author": "Lucide Contributors",
+    "licence": "ISC",
+    "url": "https://github.com/lucide-icons/lucide",
+    "trademark": false
+  },
+  {
+    "file": "ui-monitor.svg",
+    "icon": "ui:monitor",
+    "name": "Monitor",
+    "kind": "line",
+    "source": "@iconify-json/lucide@1.2.100",
+    "author": "Lucide Contributors",
+    "licence": "ISC",
+    "url": "https://github.com/lucide-icons/lucide",
+    "trademark": false
+  },
+  {
+    "file": "ui-plane.svg",
+    "icon": "ui:plane",
+    "name": "Plane",
+    "kind": "line",
+    "source": "@iconify-json/lucide@1.2.100",
+    "author": "Lucide Contributors",
+    "licence": "ISC",
+    "url": "https://github.com/lucide-icons/lucide",
+    "trademark": false
+  }
+]

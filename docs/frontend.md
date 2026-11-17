@@ -22,6 +22,7 @@ frontend/src/
   components/            presentational: render props, raise callbacks, fetch nothing
                          (SignalDetailPanel is the one exception: it loads the detail of the signal it shows)
   types/index.ts         TypeScript mirror of the backend's Pydantic schemas
+  public/about/          static showcase page served at /about/ (separate from the React app)
 ```
 
 Components never import `api/client.ts` except `SignalDetailPanel`, whose detail request belongs to the panel's own lifetime (it aborts when the selection changes).

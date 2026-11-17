@@ -55,3 +55,6 @@ coverage.xml
 htmlcov/
 frontend/coverage/
 
+
+# design-taste-frontend skill working files (shots, histories, chrome profiles)
+.taste-skill/
