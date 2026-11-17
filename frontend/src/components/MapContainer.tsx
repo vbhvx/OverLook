@@ -1,5 +1,5 @@
 // frontend/src/components/MapContainer.tsx
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import { SignalEnvelope, MapLayerSpec } from '../types';
 import { CATEGORIES, CATEGORY_IDS, POINT_CATEGORIES } from '../lib/categories';
@@ -28,6 +28,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   const mapRef = useRef<maplibregl.Map | null>(null);
   const hoverPopupRef = useRef<maplibregl.Popup | null>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [isMapReady, setIsMapReady] = useState(false);
 
   // Initialize Map
   useEffect(() => {
@@ -231,6 +232,9 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           });
         });
       });
+
+      // Sources exist only now; let the data effect apply anything that arrived before.
+      setIsMapReady(true);
     });
 
     mapRef.current = map;
@@ -244,7 +248,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   // Update Data and Visibility
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !map.isStyleLoaded()) return;
+    if (!map || !isMapReady) return;
 
     // 1. Group signals by category
     const signalsByCategory: Record<string, SignalEnvelope[]> = Object.fromEntries(
@@ -320,7 +324,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
         map.setLayoutProperty(`${id}-points`, 'visibility', isVisible ? 'visible' : 'none');
       }
     });
-  }, [signals, activeLayers]);
+  }, [signals, activeLayers, isMapReady]);
 
   // Handle programmatic Center and Zoom changes (e.g. from Region Selector)
   useEffect(() => {
