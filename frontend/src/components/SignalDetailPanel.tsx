@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { SignalEnvelope, SignalRelation } from '../types';
 import { fetchSignalDetail, isAbortError } from '../api/client';
+import { describeError } from '../lib/errors';
 import { formatDistanceToNow } from 'date-fns';
 
 interface SignalDetailPanelProps {
@@ -31,12 +32,13 @@ export const SignalDetailPanel: React.FC<SignalDetailPanelProps> = ({
     provenance: Record<string, any>;
   } | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!signal) {
-      setDetailData(null);
-      return;
-    }
+    // A new selection starts clean: the previous signal's detail must never show under this one.
+    setDetailData(null);
+    setLoadError(null);
+    if (!signal) return;
 
     // Abort on re-selection so rapid clicks don't race each other.
     const controller = new AbortController();
@@ -49,7 +51,7 @@ export const SignalDetailPanel: React.FC<SignalDetailPanelProps> = ({
       })
       .catch((err) => {
         if (isAbortError(err)) return;
-        console.error('Error loading signal detail:', err);
+        setLoadError(describeError(err, 'Loading nearby signals'));
         setLoading(false);
       });
 
@@ -249,6 +251,8 @@ export const SignalDetailPanel: React.FC<SignalDetailPanelProps> = ({
 
           {loading ? (
             <div className="text-[11px] text-slate-400 italic p-2 text-center">Loading nearby signals…</div>
+          ) : loadError ? (
+            <div role="alert" className="text-[11px] text-red-400 p-2 text-center">{loadError}</div>
           ) : detailData?.correlatedSignals && detailData.correlatedSignals.length > 0 ? (
             <div className="space-y-1.5">
               {detailData.correlatedSignals.map((nb) => {
