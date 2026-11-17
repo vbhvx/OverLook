@@ -45,19 +45,19 @@ export const LayerControl: React.FC<LayerControlProps> = ({
   const [expandedInfo, setExpandedInfo] = useState<string | null>(null);
 
   return (
-    <div className="absolute top-16 left-4 z-20 w-80 max-h-[calc(100vh-140px)] flex flex-col bg-panel/95 backdrop-blur-md border border-panel-border rounded-xl shadow-2xl transition-all overflow-hidden">
+    <div className="absolute top-16 left-4 z-20 w-80 max-h-[calc(100vh-140px)] flex flex-col bg-panel/95 backdrop-blur-md border border-panel-border rounded-xl shadow-[0_12px_40px_rgba(0,0,0,0.8)] transition-all overflow-hidden">
       {/* Header */}
       <div
-        className="px-3.5 py-2.5 flex items-center justify-between border-b border-panel-border cursor-pointer select-none hover:bg-slate-800/50"
+        className="px-3.5 py-2.5 flex items-center justify-between border-b border-panel-border cursor-pointer select-none hover:bg-slate-900/60 transition-colors"
         onClick={() => setIsCollapsed(!isCollapsed)}
       >
         <div className="flex items-center space-x-2">
-          <Layers className="w-4 h-4 text-brand-500" />
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-200">
-            Signal Layers
+          <Layers className="w-4 h-4 text-brand-500 shadow-glow-green" />
+          <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-200">
+            TACTICAL_LAYERS
           </span>
-          <span className="text-[11px] font-mono text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded">
-            {activeLayers.size}/{layers.length}
+          <span className="text-[10px] font-mono text-brand-500 bg-brand-500/10 border border-brand-500/30 px-1.5 py-0.5 rounded font-semibold">
+            [{activeLayers.size}/{layers.length}]
           </span>
         </div>
         <button className="text-slate-400 hover:text-white">
@@ -78,8 +78,8 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                 key={layer.id}
                 className={`group rounded-lg border transition-all ${
                   isEnabled
-                    ? 'bg-slate-900/90 border-panel-border'
-                    : 'bg-slate-950/40 border-slate-900 opacity-60 hover:opacity-90'
+                    ? 'bg-black/60 border-brand-500/30 shadow-[0_0_12px_rgba(0,255,157,0.06)]'
+                    : 'bg-black/30 border-panel-border opacity-50 hover:opacity-85'
                 }`}
               >
                 <div className="p-2.5 flex items-center justify-between">
@@ -92,7 +92,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                       type="checkbox"
                       checked={isEnabled}
                       onChange={() => {}} // handled by parent div click
-                      className="w-3.5 h-3.5 rounded border-slate-700 bg-slate-950 text-brand-600 focus:ring-0 cursor-pointer"
+                      className="w-3.5 h-3.5 rounded border-slate-700 bg-black text-brand-500 focus:ring-0 cursor-pointer accent-[#00ff9d]"
                     />
 
                     {/* Category Icon Badge */}
@@ -113,8 +113,8 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                           {layer.displayName}
                         </span>
                       </div>
-                      <div className="text-[10px] text-slate-400 font-mono">
-                        {layer.activeCount} signals active
+                      <div className="text-[10px] text-brand-400 font-mono">
+                        [{layer.activeCount} ACTIVE_SIGS]
                       </div>
                     </div>
                   </div>
@@ -126,7 +126,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                         onClick={() => onSyncSource(layer.sourceId!)}
                         disabled={isSyncing}
                         title={`Sync ${layer.displayName}`}
-                        className="p-1 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-800"
+                        className="p-1 rounded text-slate-400 hover:text-brand-500 hover:bg-slate-900 transition-colors"
                       >
                         <RefreshCw className={`w-3 h-3 ${isSyncing ? 'animate-spin text-brand-500' : ''}`} />
                       </button>
@@ -134,7 +134,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                     <button
                       onClick={() => setExpandedInfo(isInfoOpen ? null : layer.id)}
                       className={`p-1 rounded transition-colors ${
-                        isInfoOpen ? 'text-brand-500 bg-brand-500/10' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                        isInfoOpen ? 'text-brand-500 bg-brand-500/10' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
                       }`}
                     >
                       <Info className="w-3 h-3" />
@@ -144,18 +144,18 @@ export const LayerControl: React.FC<LayerControlProps> = ({
 
                 {/* Expanded Details / Provenance / Limitations */}
                 {isInfoOpen && (
-                  <div className="px-3 pb-2.5 pt-1 border-t border-slate-800/80 text-[11px] text-slate-300 space-y-1.5 bg-slate-950/60">
+                  <div className="px-3 pb-2.5 pt-1 border-t border-panel-border text-[11px] font-mono text-slate-300 space-y-1.5 bg-black/70">
                     <p className="text-slate-400">{layer.description}</p>
                     <div className="grid grid-cols-2 gap-1 text-[10px] font-mono pt-1 text-slate-400">
                       <div>
-                        Source: <span className="text-slate-200">{layer.sourceId || 'Internal'}</span>
+                        FEED: <span className="text-slate-200">{layer.sourceId || 'INTERNAL'}</span>
                       </div>
                       <div>
-                        Status:{' '}
+                        STATUS:{' '}
                         <span
                           className={`font-semibold ${
                             layer.sourceStatus === 'active'
-                              ? 'text-emerald-400'
+                              ? 'text-brand-500'
                               : layer.sourceStatus === 'simulated'
                               ? 'text-purple-400'
                               : 'text-amber-400'
@@ -165,10 +165,10 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                         </span>
                       </div>
                       <div>
-                        Refresh: <span className="text-slate-200">{layer.refreshIntervalSec}s</span>
+                        REFRESH: <span className="text-slate-200">{layer.refreshIntervalSec}s</span>
                       </div>
                       <div>
-                        Zoom Range: <span className="text-slate-200">{layer.minZoom}-{layer.maxZoom}</span>
+                        ZOOM_RANGE: <span className="text-slate-200">{layer.minZoom}-{layer.maxZoom}</span>
                       </div>
                     </div>
                   </div>

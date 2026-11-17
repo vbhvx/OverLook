@@ -3,12 +3,7 @@ import React, { useState } from 'react';
 import {
   X,
   Network,
-  ShieldAlert,
   ArrowRight,
-  ExternalLink,
-  MapPin,
-  Clock,
-  CheckCircle2,
   AlertTriangle
 } from 'lucide-react';
 import { InvestigationEvent, SignalEnvelope } from '../types';
@@ -36,25 +31,25 @@ export const InvestigationModal: React.FC<InvestigationModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className="w-full max-w-4xl max-h-[85vh] bg-panel border border-panel-border rounded-2xl shadow-2xl flex flex-col overflow-hidden text-slate-200">
+      <div className="w-full max-w-4xl max-h-[85vh] bg-panel border border-brand-500/30 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.9)] flex flex-col overflow-hidden text-slate-200">
         {/* Header */}
-        <div className="px-5 py-3.5 border-b border-panel-border flex items-center justify-between bg-slate-900/90">
+        <div className="px-5 py-3.5 border-b border-panel-border flex items-center justify-between bg-black/80">
           <div className="flex items-center space-x-2.5">
-            <div className="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
+            <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/40 flex items-center justify-center text-amber-400 shadow-glow-amber">
               <Network className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-white tracking-tight">
-                Event Investigation & Signal Correlation Workspace
+              <h2 className="text-sm font-mono font-bold text-white tracking-wider">
+                [CORRELATION_MATRIX // CROSS-SIGNAL_ANALYSIS]
               </h2>
-              <p className="text-[11px] text-slate-400">
-                Transparent deterministic multi-source associations grounded in verified evidence
+              <p className="text-[11px] font-mono text-slate-400">
+                // Deterministic multi-source spatial-temporal associations grounded in verified telemetry
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900 transition-colors"
           >
             <X className="w-4 h-4" />
           </button>

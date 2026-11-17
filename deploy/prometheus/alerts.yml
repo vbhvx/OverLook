@@ -1,0 +1,33 @@
+groups:
+  - name: overlook
+    rules:
+      - alert: ApiHighErrorRate
+        expr: |
+          sum(rate(overlook_http_requests_total{status=~"5.."}[5m]))
+            / clamp_min(sum(rate(overlook_http_requests_total[5m])), 1e-9) > 0.02
+        for: 10m
+        labels: {severity: page}
+        annotations:
+          summary: "API 5xx ratio above 2% for 10 minutes"
+
+      - alert: ApiLatencyP95High
+        expr: |
+          histogram_quantile(0.95, sum by (le) (rate(overlook_http_request_duration_seconds_bucket[5m]))) > 0.5
+        for: 10m
+        labels: {severity: ticket}
+        annotations:
+          summary: "API p95 latency above 500ms"
+
+      - alert: ProviderCircuitOpen
+        expr: overlook_provider_circuit_state == 2
+        for: 15m
+        labels: {severity: ticket}
+        annotations:
+          summary: "Provider {{ $labels.source }} circuit open for 15 minutes"
+
+      - alert: NoIngestionLeader
+        expr: absent(overlook_ingestion_runs_total) or sum(increase(overlook_ingestion_runs_total[30m])) == 0
+        for: 15m
+        labels: {severity: page}
+        annotations:
+          summary: "No ingestion runs in 30 minutes — no worker holds leadership"

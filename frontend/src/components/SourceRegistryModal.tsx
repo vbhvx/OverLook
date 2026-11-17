@@ -46,25 +46,25 @@ export const SourceRegistryModal: React.FC<SourceRegistryModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className="w-full max-w-5xl max-h-[85vh] bg-panel border border-panel-border rounded-2xl shadow-2xl flex flex-col overflow-hidden text-slate-200">
+      <div className="w-full max-w-5xl max-h-[85vh] bg-panel border border-brand-500/30 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.9)] flex flex-col overflow-hidden text-slate-200">
         {/* Header */}
-        <div className="px-5 py-3.5 border-b border-panel-border flex items-center justify-between bg-slate-900/90">
+        <div className="px-5 py-3.5 border-b border-panel-border flex items-center justify-between bg-black/80">
           <div className="flex items-center space-x-2.5">
-            <div className="w-7 h-7 rounded-lg bg-brand-500/20 border border-brand-500/40 flex items-center justify-center text-brand-400">
+            <div className="w-7 h-7 rounded-lg bg-brand-500/10 border border-brand-500/40 flex items-center justify-center text-brand-500 shadow-glow-green">
               <Database className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-white tracking-tight">
-                Source Provider Registry & Usage Rights
+              <h2 className="text-sm font-mono font-bold text-white tracking-wider">
+                [FEED_REGISTRY // UPSTREAM_TELEMETRY]
               </h2>
-              <p className="text-[11px] text-slate-400">
-                Audited public datasets, API contracts, licensing status, and capability boundaries
+              <p className="text-[11px] font-mono text-slate-400">
+                // Audited public datasets, rate-limit cadences, licensing boundaries &amp; circuit breakers
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900 transition-colors"
           >
             <X className="w-4 h-4" />
           </button>

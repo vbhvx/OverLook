@@ -1,11 +1,17 @@
 # backend/app/ingestion/fixtures.py
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List
-from backend.app.schemas.signals import (
-    SignalEnvelope, SignalCategory, DataStatus, GeoJSONGeometry,
-    GeometryType, SourceAttributionRef
-)
+
 from backend.app.providers.base import compute_record_hash
+from backend.app.schemas.signals import (
+    DataStatus,
+    GeoJSONGeometry,
+    GeometryType,
+    SignalCategory,
+    SignalEnvelope,
+    SourceAttributionRef,
+)
+
 
 def get_simulated_fixtures() -> List[SignalEnvelope]:
     """

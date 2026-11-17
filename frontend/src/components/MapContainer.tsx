@@ -1,7 +1,8 @@
 // frontend/src/components/MapContainer.tsx
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import { SignalEnvelope, MapLayerSpec } from '../types';
+import { CATEGORIES, CATEGORY_IDS, POINT_CATEGORIES } from '../lib/categories';
 
 interface MapContainerProps {
   signals: SignalEnvelope[];
@@ -17,7 +18,6 @@ interface MapContainerProps {
 export const MapContainer: React.FC<MapContainerProps> = ({
   signals,
   activeLayers,
-  layers,
   onSelectSignal,
   selectedSignal,
   onViewportChange,
@@ -28,6 +28,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   const mapRef = useRef<maplibregl.Map | null>(null);
   const hoverPopupRef = useRef<maplibregl.Popup | null>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [isMapReady, setIsMapReady] = useState(false);
 
   // Initialize Map
   useEffect(() => {
@@ -81,7 +82,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
         type: 'fill',
         source: 'satellite-polygons',
         paint: {
-          'fill-color': '#a855f7',
+          'fill-color': CATEGORIES.satellite.color,
           'fill-opacity': 0.18
         }
       });
@@ -98,14 +99,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
       });
 
       // 2. Add Clustered Point Sources for each Category
-      const categories: { cat: string; color: string; id: string }[] = [
-        { cat: 'earthquake', color: '#ef4444', id: 'layer-earthquakes' },
-        { cat: 'weather', color: '#06b6d4', id: 'layer-weather' },
-        { cat: 'aircraft', color: '#3b82f6', id: 'layer-aircraft' },
-        { cat: 'vessel', color: '#10b981', id: 'layer-vessels' },
-        { cat: 'camera', color: '#f59e0b', id: 'layer-cameras' },
-        { cat: 'infrastructure', color: '#64748b', id: 'layer-infrastructure' }
-      ];
+      const categories = POINT_CATEGORIES.map((cat) => ({ cat, color: CATEGORIES[cat].color, id: CATEGORIES[cat].layerId }));
 
       categories.forEach(({ cat, color, id }) => {
         const sourceName = `source-${cat}`;
@@ -238,6 +232,9 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           });
         });
       });
+
+      // Sources exist only now; let the data effect apply anything that arrived before.
+      setIsMapReady(true);
     });
 
     mapRef.current = map;
@@ -251,18 +248,12 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   // Update Data and Visibility
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !map.isStyleLoaded()) return;
+    if (!map || !isMapReady) return;
 
     // 1. Group signals by category
-    const signalsByCategory: Record<string, SignalEnvelope[]> = {
-      earthquake: [],
-      weather: [],
-      aircraft: [],
-      vessel: [],
-      camera: [],
-      infrastructure: [],
-      satellite: []
-    };
+    const signalsByCategory: Record<string, SignalEnvelope[]> = Object.fromEntries(
+      CATEGORY_IDS.map((cat) => [cat, [] as SignalEnvelope[]])
+    );
 
     signals.forEach((sig) => {
       if (signalsByCategory[sig.category]) {
@@ -287,7 +278,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     }
 
     // Toggle Satellites visibility
-    const isSatActive = activeLayers.has('layer-satellites');
+    const isSatActive = activeLayers.has(CATEGORIES.satellite.layerId);
     if (map.getLayer('layer-satellites-fill')) {
       map.setLayoutProperty('layer-satellites-fill', 'visibility', isSatActive ? 'visible' : 'none');
     }
@@ -296,14 +287,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     }
 
     // 3. Update Point Categories
-    const pointLayers = [
-      { cat: 'earthquake', id: 'layer-earthquakes' },
-      { cat: 'weather', id: 'layer-weather' },
-      { cat: 'aircraft', id: 'layer-aircraft' },
-      { cat: 'vessel', id: 'layer-vessels' },
-      { cat: 'camera', id: 'layer-cameras' },
-      { cat: 'infrastructure', id: 'layer-infrastructure' }
-    ];
+    const pointLayers = POINT_CATEGORIES.map((cat) => ({ cat, id: CATEGORIES[cat].layerId }));
 
     pointLayers.forEach(({ cat, id }) => {
       const sourceName = `source-${cat}`;
@@ -340,7 +324,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
         map.setLayoutProperty(`${id}-points`, 'visibility', isVisible ? 'visible' : 'none');
       }
     });
-  }, [signals, activeLayers]);
+  }, [signals, activeLayers, isMapReady]);
 
   // Handle programmatic Center and Zoom changes (e.g. from Region Selector)
   useEffect(() => {

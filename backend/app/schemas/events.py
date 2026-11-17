@@ -1,8 +1,11 @@
 # backend/app/schemas/events.py
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel, Field
+
 from backend.app.schemas.signals import SignalEnvelope
+
 
 class SignalRelation(BaseModel):
     id: str
@@ -19,7 +22,7 @@ class SignalRelation(BaseModel):
         "Proximity does not imply causation. This association represents "
         "spatial-temporal co-occurrence for analytical investigation."
     )
-    createdAt: datetime = Field(default_factory=datetime.utcnow)
+    createdAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class InvestigationEvent(BaseModel):
     id: str
