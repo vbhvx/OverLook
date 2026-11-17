@@ -64,6 +64,21 @@ class CircuitBreaker:
             remaining = self.reset_timeout - (self._clock() - self._opened_at)
             raise CircuitOpenError(max(remaining, 0.0))
 
+    def restore(self, state: str, failures: int, opened_ago: Optional[float]) -> None:
+        """
+        Adopts state persisted by any process. The API and the worker each hold a
+        breaker per source; the store is what they share, so it is the truth.
+        """
+        self._failures = failures
+        if state == CircuitState.CLOSED.value:
+            self._state, self._opened_at = CircuitState.CLOSED, None
+            return
+        # Open, or half-open (a reset window that has already passed).
+        if state == CircuitState.HALF_OPEN.value:
+            opened_ago = self.reset_timeout
+        self._state = CircuitState.OPEN
+        self._opened_at = self._clock() - max(opened_ago or 0.0, 0.0)
+
     def record_success(self) -> None:
         self._state = CircuitState.CLOSED
         self._failures = 0

@@ -132,6 +132,9 @@ class IngestionService:
         started = time.perf_counter()
         now = datetime.now(timezone.utc)
         state = (await self.store.load_source_states()).get(source_id) or SourceState()
+        # A circuit opens on a failed run, so that run's error time is when it opened.
+        opened_ago = (now - state.last_error_at).total_seconds() if state.last_error_at else None
+        breaker.restore(state.circuit_state, state.consecutive_failures, opened_ago)
 
         try:
             breaker.before_call()

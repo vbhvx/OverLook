@@ -25,7 +25,8 @@ export function useSourceSync(
       mark(sourceId, true);
       try {
         const result = await triggerSourceSync(sourceId);
-        if (result.status === 'failed') report(`Sync ${sourceId}: ${result.errorMessage ?? 'provider failed'}.`);
+        // "skipped" means the source's circuit is open: the provider was not called.
+        if (result.status !== 'success') report(`Sync ${sourceId}: ${result.errorMessage ?? 'provider failed'}.`);
         await refresh();
       } catch (err) {
         report(describeError(err, `Sync ${sourceId}`));
@@ -44,7 +45,7 @@ export function useSourceSync(
         const results = await Promise.allSettled(
           sources.filter((s) => s.status !== 'disabled').map((s) => triggerSourceSync(s.id))
         );
-        const failed = results.filter((r) => r.status === 'rejected' || r.value.status === 'failed').length;
+        const failed = results.filter((r) => r.status === 'rejected' || r.value.status !== 'success').length;
         if (failed) report(`${failed} of ${results.length} sources did not sync.`, 'info');
         await refresh();
       } finally {

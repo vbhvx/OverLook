@@ -91,6 +91,41 @@ async def test_circuit_opens_after_threshold_and_stops_calling_provider(service,
     assert (await service.store.load_source_states())[SRC].circuit_state == "open"
 
 
+async def test_circuit_opened_by_one_process_is_honoured_by_another(test_settings, adapter, bus):
+    # The worker and the API build separate services over one shared store.
+    store = InMemorySignalStore()
+    worker = IngestionService(store, bus, test_settings, adapters={SRC: adapter})
+    api = IngestionService(store, bus, test_settings, adapters={SRC: adapter})
+    adapter.fail_with = "degraded"
+    await worker.sync_source(SRC)
+    await worker.sync_source(SRC)  # threshold is 2: the worker's circuit is now open
+    calls = adapter.calls
+
+    result = await api.sync_now(SRC)
+    assert result.status == "skipped"
+    assert adapter.calls == calls, "the API must not call a provider whose circuit is open"
+    state = (await store.load_source_states())[SRC]
+    assert (state.circuit_state, state.consecutive_failures) == ("open", 2)
+
+
+async def test_persisted_open_circuit_allows_a_trial_once_its_window_passes(test_settings, adapter, bus):
+    store = InMemorySignalStore()
+    worker = IngestionService(store, bus, test_settings, adapters={SRC: adapter})
+    adapter.fail_with = "degraded"
+    await worker.sync_source(SRC)
+    await worker.sync_source(SRC)
+
+    # Age the stored failure past the reset window, as if time had passed.
+    state = (await store.load_source_states())[SRC]
+    state.last_error_at -= timedelta(seconds=test_settings.CIRCUIT_RESET_SECONDS + 1)
+    await store.save_source_state(SRC, state)
+
+    adapter.fail_with = None
+    api = IngestionService(store, bus, test_settings, adapters={SRC: adapter})
+    assert (await api.sync_now(SRC)).status == "success"
+    assert (await store.load_source_states())[SRC].circuit_state == "closed"
+
+
 async def test_one_failing_source_does_not_affect_others(test_settings, bus):
     good, bad = FakeAdapter([make_signal("ok")]), FakeAdapter()
     bad.raise_exc = ConnectionError("down")
