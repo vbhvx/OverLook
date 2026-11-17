@@ -59,7 +59,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="h-screen w-screen flex flex-col overflow-hidden bg-background">
+    <div className="h-screen w-screen flex flex-col overflow-hidden bg-background hud-grid">
       <Navbar
         summary={data.summary}
         regions={data.regions}

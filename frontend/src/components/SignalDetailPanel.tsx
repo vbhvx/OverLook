@@ -63,35 +63,35 @@ export const SignalDetailPanel: React.FC<SignalDetailPanelProps> = ({
   const getStatusBadge = (status: string, isSimulated: boolean) => {
     if (isSimulated) {
       return (
-        <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-purple-500/20 text-purple-400 border border-purple-500/30">
-          [SIMULATED FIXTURE]
+        <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-purple-500/10 text-purple-400 border border-purple-500/30">
+          [SIMULATED]
         </span>
       );
     }
     switch (status) {
       case 'actual':
         return (
-          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center space-x-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span>ACTUAL LIVE</span>
+          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-brand-500/10 text-brand-500 border border-brand-500/30 flex items-center space-x-1 shadow-glow-green">
+            <span className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse" />
+            <span>[LIVE_FEED]</span>
           </span>
         );
       case 'forecast':
         return (
-          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
-            MODEL FORECAST
+          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+            [FORECAST]
           </span>
         );
       case 'stale':
         return (
-          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
-            STALE REPORT
+          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">
+            [STALE]
           </span>
         );
       default:
         return (
-          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-800 text-slate-300">
-            {status.toUpperCase()}
+          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-900 border border-panel-border text-slate-300">
+            [{status.toUpperCase()}]
           </span>
         );
     }
@@ -102,15 +102,15 @@ export const SignalDetailPanel: React.FC<SignalDetailPanelProps> = ({
   const timeAgo = formatDistanceToNow(observedDate, { addSuffix: true });
 
   return (
-    <div className="absolute top-16 right-4 z-20 w-96 max-h-[calc(100vh-140px)] flex flex-col bg-panel/95 backdrop-blur-md border border-panel-border rounded-xl shadow-2xl transition-all overflow-hidden text-slate-200">
+    <div className="absolute top-16 right-4 z-20 w-96 max-h-[calc(100vh-140px)] flex flex-col bg-panel/95 backdrop-blur-md border border-panel-border rounded-xl shadow-[0_12px_40px_rgba(0,0,0,0.8)] transition-all overflow-hidden text-slate-200">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-panel-border flex items-center justify-between bg-slate-900/80">
+      <div className="px-4 py-3 border-b border-panel-border flex items-center justify-between bg-black/60">
         <div className="flex items-center space-x-2">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-            {currentSig.category}
+          <span className="text-xs font-mono font-bold uppercase tracking-wider text-brand-500">
+            [DOSSIER // {currentSig.category.toUpperCase()}]
           </span>
           <span className="text-slate-600">/</span>
-          <span className="text-xs font-mono text-slate-300 truncate max-w-[140px]">
+          <span className="text-xs font-mono text-slate-300 truncate max-w-[120px]">
             {currentSig.signalType}
           </span>
         </div>
@@ -118,7 +118,7 @@ export const SignalDetailPanel: React.FC<SignalDetailPanelProps> = ({
           {getStatusBadge(currentSig.dataStatus, currentSig.isSimulated)}
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900 transition-colors"
           >
             <X className="w-4 h-4" />
           </button>

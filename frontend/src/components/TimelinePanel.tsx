@@ -47,17 +47,17 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
   const maxBucketCount = Math.max(...buckets.map((b) => b.totalCount), 1);
 
   return (
-    <div className="absolute bottom-4 left-4 right-4 z-20 flex flex-col bg-panel/95 backdrop-blur-md border border-panel-border rounded-xl shadow-2xl transition-all overflow-hidden text-slate-200">
+    <div className="absolute bottom-4 left-4 right-4 z-20 flex flex-col bg-panel/95 backdrop-blur-md border border-panel-border rounded-xl shadow-[0_12px_40px_rgba(0,0,0,0.8)] transition-all overflow-hidden text-slate-200">
       {/* Top Filter Bar */}
-      <div className="px-4 py-2 border-b border-panel-border flex flex-wrap items-center justify-between gap-2 bg-slate-900/60">
+      <div className="px-4 py-2 border-b border-panel-border flex flex-wrap items-center justify-between gap-2 bg-black/60">
         {/* Playback Controls & Window Presets */}
         <div className="flex items-center space-x-2">
           {/* Play/Pause */}
-          <div className="flex items-center space-x-1 bg-slate-950/80 border border-panel-border rounded-lg p-0.5">
+          <div className="flex items-center space-x-1 bg-black/80 border border-panel-border rounded-lg p-0.5">
             <button
               onClick={onTogglePlay}
               className={`p-1.5 rounded text-xs transition-colors ${
-                isPlaying ? 'bg-amber-500/20 text-amber-400' : 'hover:bg-slate-800 text-slate-300'
+                isPlaying ? 'bg-amber-500/20 text-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.4)]' : 'hover:bg-slate-900 text-slate-300'
               }`}
               title={isPlaying ? 'Pause timeline playback' : 'Play timeline replay'}
             >
@@ -65,14 +65,14 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
             </button>
             <button
               onClick={onStepForward}
-              className="p-1.5 rounded hover:bg-slate-800 text-slate-300 transition-colors"
+              className="p-1.5 rounded hover:bg-slate-900 text-slate-300 transition-colors"
               title="Step forward 1 hour"
             >
               <StepForward className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={onResetPlayback}
-              className="p-1.5 rounded hover:bg-slate-800 text-slate-300 transition-colors"
+              className="p-1.5 rounded hover:bg-slate-900 text-slate-300 transition-colors"
               title="Reset timeline"
             >
               <RotateCcw className="w-3.5 h-3.5" />
@@ -80,18 +80,18 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
           </div>
 
           {/* Time Window Buttons */}
-          <div className="flex items-center space-x-1 bg-slate-950/80 border border-panel-border rounded-lg p-0.5 text-xs font-mono">
+          <div className="flex items-center space-x-1 bg-black/80 border border-panel-border rounded-lg p-0.5 text-xs font-mono">
             {[6, 24, 72, 168].map((hrs) => (
               <button
                 key={hrs}
                 onClick={() => onSelectHours(hrs)}
-                className={`px-2 py-1 rounded transition-colors ${
+                className={`px-2 py-1 rounded transition-all ${
                   selectedHours === hrs
-                    ? 'bg-brand-600 text-white font-semibold'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                    ? 'bg-brand-500 text-slate-950 font-bold shadow-glow-green'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
                 }`}
               >
-                {hrs === 168 ? '7d' : `${hrs}h`}
+                {hrs === 168 ? '[07D]' : `[${hrs < 10 ? '0' + hrs : hrs}H]`}
               </button>
             ))}
           </div>
@@ -101,30 +101,30 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
             aria-label="Filter by category"
             value={selectedCategory ?? ''}
             onChange={(e) => onSelectCategory(e.target.value || null)}
-            className="bg-slate-950/80 border border-panel-border rounded-lg px-2 py-1 text-xs font-mono text-slate-300 capitalize"
+            className="bg-black/80 border border-panel-border rounded-lg px-2 py-1 text-xs font-mono text-slate-300 capitalize focus:border-brand-500 focus:outline-none"
             style={selectedCategory ? { color: CATEGORIES[selectedCategory as keyof typeof CATEGORIES]?.color } : undefined}
           >
-            <option value="">All categories</option>
+            <option value="">[ALL_CATEGORIES]</option>
             {CATEGORY_IDS.map((cat) => (
               <option key={cat} value={cat}>
-                {cat}
+                {cat.toUpperCase()}
               </option>
             ))}
           </select>
 
           {/* Status Filter Toggle */}
-          <div className="flex items-center space-x-1 bg-slate-950/80 border border-panel-border rounded-lg p-0.5 text-xs font-mono">
+          <div className="flex items-center space-x-1 bg-black/80 border border-panel-border rounded-lg p-0.5 text-xs font-mono">
             {['all', 'actual', 'simulated'].map((st) => (
               <button
                 key={st}
                 onClick={() => onSelectStatus(st === 'all' ? null : st)}
-                className={`px-2 py-1 rounded capitalize transition-colors ${
+                className={`px-2 py-1 rounded uppercase transition-colors ${
                   (selectedStatus === null && st === 'all') || selectedStatus === st
-                    ? 'bg-slate-700 text-white font-semibold'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                    ? 'bg-brand-500/20 text-brand-500 border border-brand-500/30 font-semibold'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
                 }`}
               >
-                {st}
+                [{st}]
               </button>
             ))}
           </div>
@@ -136,10 +136,10 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
             <input
               type="text"
-              placeholder="Search callsign, place, MMSI, hub..."
+              placeholder="FILTER_INTEL >_ (callsign, mmsi...)"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full bg-slate-950/80 border border-panel-border rounded-lg pl-8 pr-3 py-1 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500 font-mono"
+              className="w-full bg-black/80 border border-panel-border rounded-lg pl-8 pr-3 py-1 text-xs text-brand-400 placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:shadow-glow-green font-mono"
             />
           </div>
         </div>
@@ -147,8 +147,8 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
         {/* Total Timeline Volume */}
         <div className="hidden sm:flex items-center space-x-1 text-xs font-mono text-slate-400">
           <Clock className="w-3.5 h-3.5 text-brand-500" />
-          <span>Timeline Volume:</span>
-          <span className="font-bold text-slate-200">{timeline?.totalSignals || 0}</span>
+          <span>VOLUME:</span>
+          <span className="font-bold text-brand-500">[{timeline?.totalSignals || 0} SIGS]</span>
         </div>
       </div>
 

@@ -16,10 +16,10 @@ export const NoticeStack: React.FC<NoticeStackProps> = ({ notices, onDismiss }) 
         <div
           key={n.id}
           role={n.tone === 'error' ? 'alert' : 'status'}
-          className={`flex items-start gap-2 px-3 py-2 rounded-lg border text-xs shadow-lg backdrop-blur-md ${
+          className={`flex items-start gap-2 px-3 py-2 rounded-lg border text-[11px] font-mono shadow-2xl backdrop-blur-md ${
             n.tone === 'error'
-              ? 'bg-red-950/85 border-red-500/40 text-red-100'
-              : 'bg-slate-900/90 border-panel-border text-slate-200'
+              ? 'bg-red-950/90 border-red-500/40 text-red-100 shadow-[0_0_15px_rgba(239,68,68,0.2)]'
+              : 'bg-black/90 border-brand-500/30 text-slate-200 shadow-glow-green'
           }`}
         >
           {n.tone === 'error' ? (
