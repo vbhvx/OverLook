@@ -246,6 +246,13 @@ def test_metrics_use_route_templates(client):
     assert "some-random-id-123" not in body
 
 
+def test_favicon_endpoint(client):
+    resp = client.get("/favicon.ico")
+    assert resp.status_code == 200
+    assert "image" in resp.headers["content-type"]
+
+
+
 # --- SSE --------------------------------------------------------------------
 
 class _FakeRequest:

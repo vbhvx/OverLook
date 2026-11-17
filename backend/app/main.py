@@ -1,10 +1,12 @@
 # backend/app/main.py
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Optional
 
 from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 from backend.app.api.errors import install_error_handlers
@@ -80,6 +82,15 @@ def create_app(settings: Optional[Settings] = None, container: Optional[Containe
 
     install_error_handlers(app)
     app.include_router(api_v1_router, prefix=settings.API_V1_PREFIX)
+
+    static_dir = Path(__file__).resolve().parent / "static"
+
+    @app.get("/favicon.ico", include_in_schema=False)
+    async def favicon() -> Response:
+        ico_path = static_dir / "favicon.ico"
+        if ico_path.exists():
+            return FileResponse(ico_path, media_type="image/x-icon")
+        return Response(status_code=204)
 
     @app.get("/metrics", include_in_schema=False)
     async def metrics() -> Response:
