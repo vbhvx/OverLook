@@ -126,7 +126,8 @@ export function useWorkspaceData(filters: ViewFilters, report: (message: string)
     await Promise.all([loadView(), loadMetadata()]);
   }, [loadView, loadMetadata]);
 
-  // Live updates: the worker announces ingested changes; coalesce bursts into one refresh.
+  // Live updates: the worker announces ingested changes, and the stream announces when it
+  // is back after an outage (changes in between were missed). Coalesce bursts into one refresh.
   const streamTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const streamStatus = useEventStream(() => {
     if (streamTimer.current) clearTimeout(streamTimer.current);
@@ -140,12 +141,12 @@ export function useWorkspaceData(filters: ViewFilters, report: (message: string)
     []
   );
 
-  // Fallback polling, only while the stream is down.
+  // Fallback polling, only while the stream is down. Sources and correlations change too.
   useEffect(() => {
     if (streamStatus === 'live') return;
-    const timer = setInterval(loadView, FALLBACK_POLL_MS);
+    const timer = setInterval(refresh, FALLBACK_POLL_MS);
     return () => clearInterval(timer);
-  }, [loadView, streamStatus]);
+  }, [refresh, streamStatus]);
 
   return { layers, sources, regions, events, signals, timeline, summary, isLoading, streamStatus, refresh };
 }

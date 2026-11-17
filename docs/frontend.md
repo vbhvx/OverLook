@@ -41,7 +41,7 @@ Rules the code follows:
 
 - **One source of truth.** The default visible layers come from the API's `isEnabledDefault` and apply until the user toggles a layer; `App` stores only the user's choice (`layerChoice`), never a copy of the defaults. The current region is the user's choice, else the first preset. Filtered signals are computed, not stored.
 - **No stale overwrites.** Viewport queries are debounced (300 ms) and each new load aborts the previous one, so a slow response can never replace a newer one.
-- **Fresh without polling.** `useWorkspaceData` subscribes to `/api/v1/stream`; a `signals.changed` event triggers one coalesced refresh (signals, timeline, summary, layers, sources and correlations). Polling every 60 s runs only while the stream is down.
+- **Fresh without polling.** `useWorkspaceData` subscribes to `/api/v1/stream`; a `signals.changed` event triggers one coalesced refresh (signals, timeline, summary, layers, sources and correlations). When the stream comes back after an outage it emits `stream.resumed`, which triggers the same refresh, because events sent meanwhile were missed. If the browser gives up on the stream (an error response such as 503 or 502), `useEventStream` reopens it with backoff (5 s doubling to 60 s). Polling every 60 s refreshes everything, and runs only while the stream is down.
 
 A state library (Redux, Zustand, React Query) was considered and not added: there is one screen, one owner of server state and no cross-tree subscriptions. React Query would be the next step if the app grows several screens sharing cached server data.
 

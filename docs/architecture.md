@@ -60,7 +60,7 @@ Nothing outside `container.py` constructs infrastructure, and endpoints receive 
 | Provider times out / 5xx / 429 | Run recorded as `failed`. Exponential backoff with jitter (15 s base, capped at the source's interval). After `CIRCUIT_FAILURE_THRESHOLD` consecutive failures the circuit opens for `CIRCUIT_RESET_SECONDS`, then one half-open trial runs. Breaker state is read from the store before every run, so a circuit the worker opened also stops a manual sync from the API. |
 | Worker leader crashes | Its Postgres session ends and the advisory lock is released. A standby acquires it within 10 s and does a full sync. |
 | Database unreachable | `/health/ready` returns 503, so load balancers stop routing. `/health/live` stays 200, so the orchestrator does not restart-loop. The scheduler logs the failure and retries on its next tick. |
-| Event listener connection drops | Reconnects every 2 s. Browsers fall back to 60 s polling while their stream is down. |
+| Event listener connection drops | Reconnects every 2 s. Browsers fall back to 60 s polling while their stream is down, reopen it with backoff, and refresh once it is back. |
 | Slow SSE client | Its bounded queue drops oldest events. Other clients are unaffected. |
 | Client floods the API | Per-IP token bucket returns 429 with `Retry-After`. Manual sync has its own per-source cooldown. |
 | Unhandled exception | 500 with the error envelope and request ID. The stack trace is logged, never returned. |
